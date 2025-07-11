@@ -1,0 +1,175 @@
+{
+  "metadata": {
+    "topic": "Topic",
+    "version": "1.0.0",
+    "createdAt": "2025-07-11T11:34:11.560Z",
+    "totalQuestions": 4
+  },
+  "nodes": {
+    "q-1752208707293": {
+      "id": "q-1752208707293",
+      "type": "question",
+      "pathId": "Topic-Q1",
+      "content": "First question",
+      "level": 1,
+      "topic": "Topic"
+    },
+    "question-1752208711802": {
+      "id": "question-1752208711802",
+      "type": "question",
+      "pathId": "Topic-Q1-A1-V1-Q1",
+      "content": "Question text level 2",
+      "level": 2,
+      "topic": "Topic"
+    },
+    "question-1752208720670": {
+      "id": "question-1752208720670",
+      "type": "question",
+      "pathId": "Topic-Q1-A1-V2-Q1",
+      "content": "Question text level 3",
+      "level": 2,
+      "topic": "Topic"
+    },
+    "question-1752218945471": {
+      "id": "question-1752218945471",
+      "type": "question",
+      "pathId": "Topic-Q1-A1-V2-Q1-A1-Q1",
+      "content": "",
+      "level": 3,
+      "topic": "Topic"
+    },
+    "answer-1752208708896": {
+      "id": "answer-1752208708896",
+      "type": "answer",
+      "pathId": "Topic-Q1-A1",
+      "content": "2 variants",
+      "level": 0,
+      "answerType": "multiple",
+      "variants": [
+        {
+          "id": "var-1752208708896",
+          "text": "Answer option",
+          "score": 2
+        },
+        {
+          "id": "var-1752209165793",
+          "text": "New Answer",
+          "score": 5
+        }
+      ]
+    },
+    "answer-1752208715686": {
+      "id": "answer-1752208715686",
+      "type": "answer",
+      "pathId": "Topic-Q1-A1-V1-Q1-A1",
+      "content": "2 variants",
+      "level": 0,
+      "answerType": "single",
+      "variants": [
+        {
+          "id": "var-1752208715686",
+          "text": "Answer option",
+          "score": 2
+        },
+        {
+          "id": "var-1752218899187",
+          "text": "New Answer",
+          "score": 3
+        }
+      ]
+    },
+    "answer-1752218930954": {
+      "id": "answer-1752218930954",
+      "type": "answer",
+      "pathId": "Topic-Q1-A1-V2-Q1-A1",
+      "content": "3 variants",
+      "level": 0,
+      "answerType": "single",
+      "variants": [
+        {
+          "id": "var-1752218930954",
+          "text": "Answer option",
+          "score": 0
+        },
+        {
+          "id": "var-1752218939003",
+          "text": "New Answer",
+          "score": 0
+        },
+        {
+          "id": "var-1752218940265",
+          "text": "New Answer",
+          "score": 0
+        }
+      ]
+    },
+    "answer-1752233134427": {
+      "id": "answer-1752233134427",
+      "type": "answer",
+      "pathId": "Topic-Q1-A1-V2-Q1-A1-Q1-A1",
+      "content": "2 variants",
+      "level": 0,
+      "answerType": "single",
+      "variants": [
+        {
+          "id": "var-1752233134427",
+          "text": "Answer option",
+          "score": 0
+        },
+        {
+          "id": "var-1752233161001",
+          "text": "New Answer",
+          "score": 0
+        }
+      ]
+    },
+    "o-1752233635619": {
+      "id": "o-1752233635619",
+      "type": "outcome",
+      "pathId": "Topic-Q1-A1-V1-Q1-A1-E1",
+      "content": "Enter your recommendation here...",
+      "level": 0,
+      "topic": "Topic",
+      "recommendation": "Enter your recommendation here..."
+    },
+    "o-1752233643617": {
+      "id": "o-1752233643617",
+      "type": "outcome",
+      "pathId": "Topic-Q1-A1-V2-Q1-A1-Q1-A1-E1",
+      "content": "Enter your recommendation here...",
+      "level": 0,
+      "topic": "Topic",
+      "recommendation": "Enter your recommendation here..."
+    }
+  },
+  "navigation": {
+    "q-1752208707293": {
+      "default": "Topic-Q1-A1"
+    },
+    "question-1752208711802": {
+      "default": "Topic-Q1-A1-V1-Q1-A1"
+    },
+    "answer-1752208708896": {
+      "variants": {
+        "variant-0": "Topic-Q1-A1-V1-Q1",
+        "variant-1": "Topic-Q1-A1-V2-Q1"
+      }
+    },
+    "question-1752208720670": {
+      "default": "Topic-Q1-A1-V2-Q1-A1"
+    },
+    "answer-1752218930954": {
+      "default": "Topic-Q1-A1-V2-Q1-A1-Q1"
+    },
+    "question-1752218945471": {
+      "default": "Topic-Q1-A1-V2-Q1-A1-Q1-A1"
+    },
+    "answer-1752208715686": {
+      "default": "Topic-Q1-A1-V1-Q1-A1-E1"
+    },
+    "answer-1752233134427": {
+      "default": "Topic-Q1-A1-V2-Q1-A1-Q1-A1-E1"
+    }
+  },
+  "multipleChoiceRules": {}
+}
