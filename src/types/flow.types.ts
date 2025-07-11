@@ -102,6 +102,7 @@ export interface QuestionFlowExport {
       pathId: string;
       content: string;
       level: number;
+      position: { x: number; y: number }; // Add position to preserve layout
       
       // For questions
       topic?: string;

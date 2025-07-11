@@ -33,6 +33,7 @@ export class ExportService {
         pathId: node.data.pathId,
         content: node.data.questionText,
         level: node.data.questionLevel,
+        position: node.position, // Preserve position
         topic: node.data.topic,
       };
     });
@@ -45,6 +46,7 @@ export class ExportService {
         pathId: node.data.pathId,
         content: `${node.data.variants?.length || 0} variants`,
         level: 0, // Answers don't have levels
+        position: node.position, // Preserve position
         topic: node.data.topic, // Include topic for answer nodes
         answerType: node.data.answerType,
         variants: node.data.variants?.map((v: AnswerVariant) => ({
@@ -66,6 +68,7 @@ export class ExportService {
         pathId: node.data.pathId,
         content: node.data.recommendation || 'No recommendation provided',
         level: 0, // Outcomes don't have levels
+        position: node.position, // Preserve position
         topic: node.data.topic,
         recommendation: node.data.recommendation,
       };
@@ -212,7 +215,8 @@ export class ExportService {
     
     // Convert nodes back to React Flow format
     Object.values(jsonData.nodes).forEach((nodeData, index) => {
-      const basePosition = {
+      // Use preserved position if available, otherwise fallback to grid layout
+      const position = nodeData.position || {
         x: 200 + (index % 3) * 400,
         y: 200 + Math.floor(index / 3) * 300
       };
@@ -221,7 +225,7 @@ export class ExportService {
         nodes.push({
           id: nodeData.id,
           type: 'question',
-          position: basePosition,
+          position: position,
           data: {
             pathId: nodeData.pathId,
             topic: nodeData.topic || 'IMPORTED',
@@ -236,7 +240,7 @@ export class ExportService {
         nodes.push({
           id: nodeData.id,
           type: 'answer',
-          position: { x: basePosition.x, y: basePosition.y + 150 },
+          position: position,
           data: {
             pathId: nodeData.pathId,
             answerType: nodeData.answerType || 'single',
@@ -249,7 +253,7 @@ export class ExportService {
         nodes.push({
           id: nodeData.id,
           type: 'outcome',
-          position: { x: basePosition.x, y: basePosition.y + 300 },
+          position: position,
           data: {
             pathId: nodeData.pathId,
             recommendation: nodeData.recommendation || 'No recommendation provided',
