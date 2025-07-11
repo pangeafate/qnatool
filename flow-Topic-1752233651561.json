@@ -1,0 +1,109 @@
+{
+  "metadata": {
+    "topic": "Topic",
+    "version": "1.0.0",
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "totalQuestions": 3
+  },
+  "nodes": {
+    "q1": {
+      "id": "q1",
+      "type": "question",
+      "pathId": "Topic-Q1",
+      "content": "What is your experience level with questionnaire design?",
+      "level": 1,
+      "topic": "Topic"
+    },
+    "a1": {
+      "id": "a1",
+      "type": "answer",
+      "pathId": "Topic-Q1-A1",
+      "content": "3 variants",
+      "level": 0,
+      "topic": "Topic",
+      "answerType": "single",
+      "variants": [
+        {
+          "id": "var1",
+          "text": "Beginner",
+          "score": 1
+        },
+        {
+          "id": "var2",
+          "text": "Intermediate",
+          "score": 2
+        },
+        {
+          "id": "var3",
+          "text": "Advanced",
+          "score": 3
+        }
+      ]
+    },
+    "q2": {
+      "id": "q2",
+      "type": "question",
+      "pathId": "Topic-Q1-A1-Q2",
+      "content": "Do you prefer visual or text-based tools?",
+      "level": 2,
+      "topic": "Topic"
+    },
+    "a2": {
+      "id": "a2",
+      "type": "answer",
+      "pathId": "Topic-Q1-A1-Q2-A1",
+      "content": "2 variants",
+      "level": 0,
+      "topic": "Topic",
+      "answerType": "single",
+      "variants": [
+        {
+          "id": "var1",
+          "text": "Visual tools",
+          "score": 1
+        },
+        {
+          "id": "var2",
+          "text": "Text-based tools",
+          "score": 0
+        }
+      ]
+    },
+    "o1": {
+      "id": "o1",
+      "type": "outcome",
+      "pathId": "Topic-Q1-A1-Q2-A1-E1",
+      "content": "You should explore visual flow builders like this one!",
+      "level": 0,
+      "topic": "Topic",
+      "recommendation": "You should explore visual flow builders like this one! They provide intuitive drag-and-drop interfaces that make questionnaire design much easier and more engaging."
+    },
+    "o2": {
+      "id": "o2",
+      "type": "outcome",
+      "pathId": "Topic-Q1-A1-Q2-A1-E2",
+      "content": "Consider hybrid approaches that combine visual and text elements.",
+      "level": 0,
+      "topic": "Topic",
+      "recommendation": "Consider hybrid approaches that combine visual and text elements. This tool offers the best of both worlds with visual flow design and detailed text editing capabilities."
+    }
+  },
+  "navigation": {
+    "q1": {
+      "default": "Topic-Q1-A1"
+    },
+    "a1": {
+      "default": "Topic-Q1-A1-Q2"
+    },
+    "q2": {
+      "default": "Topic-Q1-A1-Q2-A1"
+    },
+    "a2": {
+      "variants": {
+        "variant-0": "Topic-Q1-A1-Q2-A1-E1",
+        "variant-1": "Topic-Q1-A1-Q2-A1-E2"
+      }
+    }
+  },
+  "multipleChoiceRules": {}
+} 
