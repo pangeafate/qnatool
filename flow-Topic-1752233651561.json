@@ -12,6 +12,7 @@
       "pathId": "Topic-Q1",
       "content": "What is your experience level with questionnaire design?",
       "level": 1,
+      "position": { "x": 100, "y": 100 },
       "topic": "Topic"
     },
     "a1": {
@@ -20,6 +21,7 @@
       "pathId": "Topic-Q1-A1",
       "content": "3 variants",
       "level": 0,
+      "position": { "x": 100, "y": 250 },
       "topic": "Topic",
       "answerType": "single",
       "variants": [
@@ -46,6 +48,7 @@
       "pathId": "Topic-Q1-A1-Q2",
       "content": "Do you prefer visual or text-based tools?",
       "level": 2,
+      "position": { "x": 450, "y": 100 },
       "topic": "Topic"
     },
     "a2": {
@@ -54,6 +57,7 @@
       "pathId": "Topic-Q1-A1-Q2-A1",
       "content": "2 variants",
       "level": 0,
+      "position": { "x": 450, "y": 250 },
       "topic": "Topic",
       "answerType": "single",
       "variants": [
@@ -75,6 +79,7 @@
       "pathId": "Topic-Q1-A1-Q2-A1-E1",
       "content": "You should explore visual flow builders like this one!",
       "level": 0,
+      "position": { "x": 800, "y": 150 },
       "topic": "Topic",
       "recommendation": "You should explore visual flow builders like this one! They provide intuitive drag-and-drop interfaces that make questionnaire design much easier and more engaging."
     },
@@ -84,6 +89,7 @@
       "pathId": "Topic-Q1-A1-Q2-A1-E2",
       "content": "Consider hybrid approaches that combine visual and text elements.",
       "level": 0,
+      "position": { "x": 800, "y": 350 },
       "topic": "Topic",
       "recommendation": "Consider hybrid approaches that combine visual and text elements. This tool offers the best of both worlds with visual flow design and detailed text editing capabilities."
     }
