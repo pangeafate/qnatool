@@ -1,9 +1,10 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { FlowCanvas } from "./components/Canvas/FlowCanvas";
 import { Toolbar } from "./components/Toolbar/Toolbar";
 import { LandingScreen } from "./components/LandingScreen/LandingScreen";
 import { Node } from "reactflow";
+import { ReactFlowProvider } from "reactflow";
 import { demoData } from "./utils/demoData";
 import { useFlowStore } from "./stores/flowStore";
 import { ExportService } from "./services/exportService";
@@ -11,6 +12,8 @@ import "./App.css";
 
 function App() {
   const [showLanding, setShowLanding] = useState(true);
+  const [shouldAutoOrganize, setShouldAutoOrganize] = useState(false);
+  const hasAutoOrganized = useRef(false);
   const { nodes, addNode, setNodes, setEdges, clearFlow } = useFlowStore();
 
   // Auto-load default flow when entering the app
@@ -48,11 +51,18 @@ function App() {
     }
     
     setShowLanding(false);
+    setShouldAutoOrganize(true); // Trigger auto-organize after entering canvas
   }, [setNodes, setEdges]);
 
   const handleAddNode = useCallback((node: Node) => {
     addNode(node);
   }, [addNode]);
+
+  const handleAutoOrganizeComplete = useCallback(() => {
+    setShouldAutoOrganize(false);
+    hasAutoOrganized.current = true;
+    console.log('Auto-organize completed');
+  }, []);
 
   const handleLoadDemo = useCallback(() => {
     setNodes(demoData.nodes);
@@ -109,7 +119,12 @@ function App() {
       
       {/* Canvas */}
       <div className="flex-1">
-        <FlowCanvas />
+        <ReactFlowProvider>
+          <FlowCanvas 
+            shouldAutoOrganize={shouldAutoOrganize && !hasAutoOrganized.current}
+            onAutoOrganizeComplete={handleAutoOrganizeComplete}
+          />
+        </ReactFlowProvider>
       </div>
     </div>
   );

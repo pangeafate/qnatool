@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import ReactFlow, {
   Controls,
   Background,
@@ -11,6 +11,7 @@ import ReactFlow, {
   ConnectionMode,
   Panel,
   BackgroundVariant,
+  useReactFlow,
 } from 'reactflow';
 import { useFlowStore } from '../../stores/flowStore';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
@@ -29,15 +30,21 @@ const defaultEdgeOptions = {
   animated: true,
   type: 'smoothstep',
   style: {
-              stroke: '#9ca3af', // Light grey by default
+    stroke: '#9ca3af', // Light grey by default
     strokeWidth: 2,
   },
 };
 
-export function FlowCanvas() {
-  const { nodes, edges, addEdge: storeAddEdge, updateNodePosition, deleteEdge: storeDeleteEdge, propagateTopicOnConnection, selectedNodeId } = useFlowStore();
-  const [nodesState, setNodes, onNodesChange] = useNodesState(nodes);
+interface FlowCanvasProps {
+  shouldAutoOrganize?: boolean;
+  onAutoOrganizeComplete?: () => void;
+}
+
+export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete }: FlowCanvasProps) {
+  const { nodes, edges, addEdge: storeAddEdge, updateNodePosition, deleteEdge: storeDeleteEdge, propagateTopicOnConnection, selectedNodeId, setNodes } = useFlowStore();
+  const [nodesState, setNodesLocal, onNodesChange] = useNodesState(nodes);
   const [edgesState, setEdges, onEdgesChange] = useEdgesState(edges);
+  const reactFlowInstance = useReactFlow();
   
   // Add a ref to track if we're doing a bulk position update (like organize)
   const isBulkUpdate = React.useRef(false);
@@ -53,7 +60,7 @@ export function FlowCanvas() {
 
   // Sync nodes while preserving positions (unless it's a bulk update)
   React.useEffect(() => {
-    setNodes((currentNodes) => {
+    setNodesLocal((currentNodes) => {
       // If it's a bulk update (like organize), use store nodes directly
       if (isBulkUpdate.current) {
         console.log('Bulk update detected - using store positions directly');
@@ -190,7 +197,7 @@ export function FlowCanvas() {
         };
       });
     });
-  }, [nodes, edges, setNodes, selectedNodeId]);
+  }, [nodes, edges, setNodesLocal, selectedNodeId]);
 
   React.useEffect(() => {
     // Apply edge styling based on selected node
@@ -399,6 +406,167 @@ export function FlowCanvas() {
       delete (window as any).flowCanvasSetBulkUpdate;
     };
   }, []);
+
+  // Auto-organize logic
+  useEffect(() => {
+    if (shouldAutoOrganize && reactFlowInstance && nodes.length > 0) {
+      console.log('Auto-organizing nodes...');
+      
+      // Delay the organize and zoom actions
+      const timeoutId = setTimeout(() => {
+        // First, organize the nodes
+        organizeNodes();
+        
+        // Then zoom out to fit all nodes with some delay
+        setTimeout(() => {
+          reactFlowInstance.fitView({ 
+            padding: 0.2,  // 20% padding around the nodes
+            maxZoom: 0.8,  // Don't zoom in more than 80%
+            minZoom: 0.1,  // Allow zooming out to 10%
+            duration: 1000 // Smooth animation over 1 second
+          });
+          
+          // Call the completion callback
+          onAutoOrganizeComplete?.();
+        }, 500); // Wait 500ms after organize before zooming
+        
+      }, 1000); // Wait 1 second before starting (reduced from 2000)
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [shouldAutoOrganize, reactFlowInstance, nodes.length, onAutoOrganizeComplete]);
+
+  // Organize function (copied from Toolbar)
+  const organizeNodes = () => {
+    console.log('Organizing nodes...');
+    
+    if (nodes.length < 2) {
+      console.log('Not enough nodes to organize');
+      return;
+    }
+
+    // Layout parameters
+    const horizontalSpacing = 400;
+    const verticalSpacing = 420;
+    const startX = 150;
+    const startY = 150;
+    const maxNodesPerRow = 4;
+    
+    // Build adjacency maps for parent-child relationships
+    const children = new Map<string, string[]>();
+    const parents = new Map<string, string>();
+    const incomingEdges = new Map<string, number>();
+    
+    // Initialize maps
+    nodes.forEach(node => {
+      children.set(node.id, []);
+      incomingEdges.set(node.id, 0);
+    });
+    
+    // Build parent-child relationships from edges
+    edges.forEach(edge => {
+      const parentChildren = children.get(edge.source) || [];
+      parentChildren.push(edge.target);
+      children.set(edge.source, parentChildren);
+      
+      parents.set(edge.target, edge.source);
+      
+      const incoming = incomingEdges.get(edge.target) || 0;
+      incomingEdges.set(edge.target, incoming + 1);
+    });
+    
+    // Find root nodes (nodes with no incoming edges)
+    const rootNodes = nodes.filter(node => (incomingEdges.get(node.id) || 0) === 0);
+    
+    // If no root nodes, use the first node as root
+    if (rootNodes.length === 0 && nodes.length > 0) {
+      rootNodes.push(nodes[0]);
+    }
+    
+    // Assign levels using BFS
+    const nodeLevel = new Map<string, number>();
+    const nodesAtLevel = new Map<number, Node[]>();
+    const visited = new Set<string>();
+    let maxLevel = 0;
+    
+    // BFS to assign levels
+    const queue: { node: Node; level: number }[] = [];
+    rootNodes.forEach(node => {
+      queue.push({ node, level: 0 });
+      nodeLevel.set(node.id, 0);
+    });
+    
+    while (queue.length > 0) {
+      const { node, level } = queue.shift()!;
+      
+      if (visited.has(node.id)) continue;
+      visited.add(node.id);
+      
+      maxLevel = Math.max(maxLevel, level);
+      
+      // Add node to its level
+      const levelNodes = nodesAtLevel.get(level) || [];
+      levelNodes.push(node);
+      nodesAtLevel.set(level, levelNodes);
+      
+      // Process children (go to next level)
+      const nodeChildren = children.get(node.id) || [];
+      nodeChildren.forEach(childId => {
+        const childNode = nodes.find(n => n.id === childId);
+        if (childNode && !visited.has(childId)) {
+          queue.push({ node: childNode, level: level + 1 });
+          nodeLevel.set(childId, level + 1);
+        }
+      });
+    }
+    
+    // Create a flat ordered list maintaining hierarchy
+    const orderedNodes: Node[] = [];
+    for (let level = 0; level <= maxLevel; level++) {
+      const levelNodes = nodesAtLevel.get(level) || [];
+      orderedNodes.push(...levelNodes);
+    }
+    
+    // Add unconnected nodes at the end
+    const unconnectedNodes = nodes.filter(n => !visited.has(n.id));
+    orderedNodes.push(...unconnectedNodes);
+    
+    // Position nodes in a compact grid with wrapping
+    const updatedNodes = orderedNodes.map((node, index) => {
+      const row = Math.floor(index / maxNodesPerRow);
+      const col = index % maxNodesPerRow;
+      
+      // Calculate position with proper centering
+      const totalCols = Math.min(orderedNodes.length, maxNodesPerRow);
+      const currentRowNodeCount = Math.min(orderedNodes.length - row * maxNodesPerRow, maxNodesPerRow);
+      
+      // Center each row
+      const rowWidth = (currentRowNodeCount - 1) * horizontalSpacing;
+      const totalWidth = (totalCols - 1) * horizontalSpacing;
+      const rowStartX = startX + (totalWidth - rowWidth) / 2;
+      
+      const newPosition = {
+        x: rowStartX + col * horizontalSpacing,
+        y: startY + row * verticalSpacing
+      };
+      
+      return {
+        ...node,
+        position: newPosition
+      };
+    });
+    
+    // Set bulk update flag BEFORE updating nodes
+    if ((window as any).flowCanvasSetBulkUpdate) {
+      (window as any).flowCanvasSetBulkUpdate();
+    }
+    
+    // Update nodes in store
+    setTimeout(() => {
+      setNodes(updatedNodes);
+      console.log('Organization complete!');
+    }, 50);
+  };
 
   return (
     <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100">
