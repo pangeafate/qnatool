@@ -1,0 +1,679 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\froman\fcharset0 Times-Bold;\f1\froman\fcharset0 Times-Roman;\f2\fnil\fcharset0 HelveticaNeue;
+\f3\fmodern\fcharset0 Courier;\f4\fmodern\fcharset0 Courier-Oblique;\f5\fmodern\fcharset0 Courier-Bold;
+}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red0\green0\blue0;\red155\green162\blue177;
+\red184\green93\blue213;\red197\green136\blue83;\red81\green157\blue235;\red136\green185\blue102;\red74\green80\blue93;
+\red214\green85\blue98;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;\cssrgb\c0\c0\c0\c84706;\cssrgb\c67059\c69804\c74902;
+\cssrgb\c77647\c47059\c86667;\cssrgb\c81961\c60392\c40000;\cssrgb\c38039\c68627\c93725;\cssrgb\c59608\c76471\c47451;\cssrgb\c36078\c38824\c43922;
+\cssrgb\c87843\c42353\c45882;}
+{\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{decimal\}}{\leveltext\leveltemplateid1\'01\'00;}{\levelnumbers\'01;}\fi-360\li720\lin720 }{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{circle\}}{\leveltext\leveltemplateid2\'01\uc0\u9702 ;}{\levelnumbers;}\fi-360\li1440\lin1440 }{\listname ;}\listid1}
+{\list\listtemplateid2\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid101\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid2}}
+{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}{\listoverride\listid2\listoverridecount0\ls2}}
+\margl1440\margr1440\vieww21400\viewh16500\viewkind0
+\deftab720
+\pard\pardeftab720\sa321\partightenfactor0
+
+\f0\b\fs48 \cf0 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Question Flow Visual Builder - Technical Specification\
+\pard\pardeftab720\sa298\partightenfactor0
+
+\fs36 \cf0 Tool Description\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\b0\fs24 \cf0 A visual question flow builder that enables users to create, edit, and manage complex questionnaire logic through an intuitive drag-and-drop interface. The tool visualizes questions and answers as connected cards on an infinite canvas, automatically manages routing IDs, and provides import/export capabilities for Excel and JSON formats.\
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs36 \cf0 Architecture Overview\
+\pard\pardeftab720\sa280\partightenfactor0
+
+\fs28 \cf0 Core Components\
+\pard\pardeftab720\qc\partightenfactor0
+
+\f2\b0\fs22 \cf3 \strokec3 \
+\pard\pardeftab720\partightenfactor0
+
+\f3\fs26 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \uc0\u9484 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9488 \
+\uc0\u9474                     Frontend (React)                      \u9474 \
+\uc0\u9500 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9508 \
+\uc0\u9474   Canvas Engine  \u9474   State Manager  \u9474   File Handler       \u9474 \
+\uc0\u9474   (React Flow)   \u9474   (Zustand)      \u9474   (XLSX/JSON)       \u9474 \
+\uc0\u9500 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9508 \
+\uc0\u9474   Graph Logic    \u9474   ID Generator   \u9474   Validation Engine  \u9474 \
+\uc0\u9474   (Dagre)        \u9474   (Custom)       \u9474   (Custom)          \u9474 \
+\uc0\u9492 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9496 \
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f0\b\fs28 \cf0 \strokec2 \shad0 Data Model\
+\pard\pardeftab720\qc\partightenfactor0
+
+\f2\b0\fs22 \cf3 \strokec3 \
+\pard\pardeftab720\partightenfactor0
+
+\f3\fs26 \cf0 \strokec2 typescript\
+\pard\pardeftab720\partightenfactor0
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 interface\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 QuestionNode\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+  id\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  type\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'question'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  data\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+    pathId\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+    questionText\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+    questionLevel\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 number\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+    elementId\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+    subElementId\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+    metadata\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ?:\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  Record\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 <\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 , \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 any\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 >\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  \};\
+  position\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{ x\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 number\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ; y\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 number\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \};\
+\}\
+\
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 interface\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 AnswerNode\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+  id\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  type\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'answer'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  data\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+    answerType\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'single'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 |\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'multiple'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+    variants\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  AnswerVariant[];\
+    defaultNextPath\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ?:\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ; 
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // For "regardless of answer" connection
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+  \};\
+  position\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{ x\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 number\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ; y\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 number\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \};\
+\}\
+\
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 interface\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 AnswerVariant\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+  id\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  text\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  score\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 number\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  allowsInput\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ?:\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 boolean\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  inputValidation\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ?:\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'number'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 |\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'string'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 |\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'email'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 |\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'date'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  inputPlaceholder\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ?:\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  nextPathOverride\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ?:\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ; 
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Variant-specific routing
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+\}\
+\
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 interface\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 FlowEdge\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+  id\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  source\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  target\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  sourceHandle\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ?:\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ; 
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // For variant-specific connections
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+  animated\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ?:\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 boolean\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  label\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ?:\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+\}\
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs36 \cf0 \strokec2 \shad0 Tech Stack\
+\pard\pardeftab720\sa280\partightenfactor0
+
+\fs28 \cf0 Core Dependencies\
+\pard\pardeftab720\qc\partightenfactor0
+
+\f2\b0\fs22 \cf3 \strokec3 \
+\pard\pardeftab720\partightenfactor0
+
+\f3\fs26 \cf0 \strokec2 json\
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \{\
+  \cf10 \strokec10 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "dependencies"\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+    
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Canvas & Visualization
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+    \cf10 \strokec10 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "react"\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "^18.2.0"\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+    \cf10 \strokec10 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "react-flow-renderer"\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "^10.3.0"\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+    \cf10 \strokec10 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "dagre"\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "^0.8.5"\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+    \
+    
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // State Management
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+    \cf10 \strokec10 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "zustand"\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "^4.4.0"\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+    \cf10 \strokec10 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "immer"\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "^10.0.0"\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+    \
+    
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // UI Components
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+    \cf10 \strokec10 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "@radix-ui/react-*"\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "latest"\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+    \cf10 \strokec10 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "tailwindcss"\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "^3.4.0"\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+    \cf10 \strokec10 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "lucide-react"\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "^0.300.0"\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+    \
+    
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // File Handling
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+    \cf10 \strokec10 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "xlsx"\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "^0.18.5"\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+    \cf10 \strokec10 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "file-saver"\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "^2.0.5"\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+    \
+    
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Utilities
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+    \cf10 \strokec10 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "uuid"\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "^9.0.0"\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+    \cf10 \strokec10 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "lodash"\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "^4.17.21"\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+    \cf10 \strokec10 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "react-hotkeys-hook"\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "^4.4.0"\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+  \}\
+\}\
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs36 \cf0 \strokec2 \shad0 Building Guidelines\
+\pard\pardeftab720\sa280\partightenfactor0
+
+\fs28 \cf0 1. Project Setup\
+\pard\pardeftab720\qc\partightenfactor0
+
+\f2\b0\fs22 \cf3 \strokec3 \
+\pard\pardeftab720\partightenfactor0
+
+\f3\fs26 \cf0 \strokec2 bash\
+\pard\pardeftab720\partightenfactor0
+
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 # Create project with Vite for better performance
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+\pard\pardeftab720\partightenfactor0
+\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 npm\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  create vite@latest question-flow-builder -- --template react-ts\
+\pard\pardeftab720\partightenfactor0
+\cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 cd\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  question-flow-builder\
+\pard\pardeftab720\partightenfactor0
+\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 npm\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 install\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 # Install dependencies
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+\pard\pardeftab720\partightenfactor0
+\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 npm\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 install\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  react-flow-renderer dagre zustand immer\
+\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 npm\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 install\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  @radix-ui/react-dialog @radix-ui/react-select @radix-ui/react-switch\
+\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 npm\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 install\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  xlsx file-saver uuid lodash react-hotkeys-hook\
+\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 npm\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 install\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  -D @types/lodash @types/uuid @types/file-saver\
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f0\b\fs28 \cf0 \strokec2 \shad0 2. Project Structure\
+\pard\pardeftab720\qc\partightenfactor0
+
+\f2\b0\fs22 \cf3 \strokec3 \
+\pard\pardeftab720\partightenfactor0
+
+\f3\fs26 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 src/\
+\uc0\u9500 \u9472 \u9472  components/\
+\uc0\u9474    \u9500 \u9472 \u9472  Canvas/\
+\uc0\u9474    \u9474    \u9500 \u9472 \u9472  FlowCanvas.tsx\
+\uc0\u9474    \u9474    \u9500 \u9472 \u9472  nodes/\
+\uc0\u9474    \u9474    \u9474    \u9500 \u9472 \u9472  QuestionNode.tsx\
+\uc0\u9474    \u9474    \u9474    \u9500 \u9472 \u9472  AnswerNode.tsx\
+\uc0\u9474    \u9474    \u9474    \u9492 \u9472 \u9472  NodeHandles.tsx\
+\uc0\u9474    \u9474    \u9492 \u9472 \u9472  edges/\
+\uc0\u9474    \u9474        \u9492 \u9472 \u9472  CustomEdge.tsx\
+\uc0\u9474    \u9500 \u9472 \u9472  Toolbar/\
+\uc0\u9474    \u9474    \u9500 \u9472 \u9472  Toolbar.tsx\
+\uc0\u9474    \u9474    \u9500 \u9472 \u9472  ZoomControls.tsx\
+\uc0\u9474    \u9474    \u9492 \u9472 \u9472  ImportExportButtons.tsx\
+\uc0\u9474    \u9500 \u9472 \u9472  Sidebar/\
+\uc0\u9474    \u9474    \u9500 \u9472 \u9472  PropertiesPanel.tsx\
+\uc0\u9474    \u9474    \u9492 \u9472 \u9472  NodeLibrary.tsx\
+\uc0\u9474    \u9492 \u9472 \u9472  Dialogs/\
+\uc0\u9474        \u9500 \u9472 \u9472  ImportDialog.tsx\
+\uc0\u9474        \u9492 \u9472 \u9472  ExportDialog.tsx\
+\uc0\u9500 \u9472 \u9472  stores/\
+\uc0\u9474    \u9500 \u9472 \u9472  flowStore.ts\
+\uc0\u9474    \u9500 \u9472 \u9472  selectionStore.ts\
+\uc0\u9474    \u9492 \u9472 \u9472  historyStore.ts\
+\uc0\u9500 \u9472 \u9472  utils/\
+\uc0\u9474    \u9500 \u9472 \u9472  pathIdGenerator.ts\
+\uc0\u9474    \u9500 \u9472 \u9472  excelParser.ts\
+\uc0\u9474    \u9500 \u9472 \u9472  jsonConverter.ts\
+\uc0\u9474    \u9500 \u9472 \u9472  layoutEngine.ts\
+\uc0\u9474    \u9492 \u9472 \u9472  validation.ts\
+\uc0\u9500 \u9472 \u9472  hooks/\
+\uc0\u9474    \u9500 \u9472 \u9472  useKeyboardShortcuts.ts\
+\uc0\u9474    \u9500 \u9472 \u9472  useAutoSave.ts\
+\uc0\u9474    \u9492 \u9472 \u9472  useFlowValidation.ts\
+\uc0\u9500 \u9472 \u9472  types/\
+\uc0\u9474    \u9492 \u9472 \u9472  flow.types.ts\
+\uc0\u9492 \u9472 \u9472  App.tsx\
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f0\b\fs28 \cf0 \strokec2 \shad0 3. Core Implementation Files\
+\pard\pardeftab720\sa319\partightenfactor0
+
+\f5\fs26 \cf0 \strokec2 stores/flowStore.ts
+\f0\fs24 \strokec2 \
+\pard\pardeftab720\qc\partightenfactor0
+
+\f2\b0\fs22 \cf3 \strokec3 \
+\pard\pardeftab720\partightenfactor0
+
+\f3\fs26 \cf0 \strokec2 typescript\
+\pard\pardeftab720\partightenfactor0
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 import\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{ create \} \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 from\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'zustand'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 import\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{ immer \} \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 from\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'zustand/middleware/immer'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 import\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{ Node, Edge, Connection \} \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 from\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'react-flow-renderer'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+\
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 interface\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 FlowState\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+  nodes\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  Node[];\
+  edges\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  Edge[];\
+  selectedNodeId\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 |\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 null\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  \
+  
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Actions
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 addNode:\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (node\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  Node) \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =>\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 void\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 updateNode:\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (nodeId\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 , data\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 any\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ) \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =>\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 void\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 deleteNode:\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (nodeId\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ) \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =>\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 void\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 addEdge:\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (edge\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  Edge) \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =>\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 void\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 deleteEdge:\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (edgeId\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ) \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =>\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 void\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 setNodes:\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (nodes\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  Node[]) \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =>\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 void\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 setEdges:\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (edges\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  Edge[]) \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =>\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 void\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  \
+  
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Complex operations
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 createLinkedQuestion:\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (parentNodeId\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 , position\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{ x\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 number\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ; y\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 number\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \}) \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =>\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 void\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 importFromExcel:\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (data\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 any\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 []) \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =>\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 void\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  exportToFormat\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (format\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'excel'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 |\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'json'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ) \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =>\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 any\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+\}\
+\
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 export\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  useFlowStore \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 create<\cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 FlowState\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 >\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ()(\
+  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 immer\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ((set, get) \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =>\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (\{\
+    nodes\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  [],\
+    edges\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  [],\
+    selectedNodeId\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 null\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+    \
+    
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Implementation here...
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+  \}))\
+);\
+\pard\pardeftab720\sa319\partightenfactor0
+
+\f5\b \cf0 \strokec2 \shad0 components/Canvas/FlowCanvas.tsx
+\f0\fs24 \strokec2 \
+\pard\pardeftab720\qc\partightenfactor0
+
+\f2\b0\fs22 \cf3 \strokec3 \
+\pard\pardeftab720\partightenfactor0
+
+\f3\fs26 \cf0 \strokec2 typescript\
+\pard\pardeftab720\partightenfactor0
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 import\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  ReactFlow, \{\
+  Controls,\
+  Background,\
+  MiniMap,\
+  useNodesState,\
+  useEdgesState,\
+  addEdge,\
+  Connection,\
+\} \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 from\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'react-flow-renderer'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 import\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{ useFlowStore \} \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 from\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 '@/stores/flowStore'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 import\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{ useKeyboardShortcuts \} \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 from\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 '@/hooks/useKeyboardShortcuts'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 import\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  QuestionNode \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 from\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 './nodes/QuestionNode'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 import\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  AnswerNode \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 from\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 './nodes/AnswerNode'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+\
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  nodeTypes \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+  question\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  QuestionNode,\
+  answer\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  AnswerNode,\
+\};\
+\
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 export\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 function\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 FlowCanvas\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 () \{\
+  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{ nodes, edges, addEdge\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  storeAddEdge \} \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 useFlowStore\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ();\
+  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  [nodesState, setNodes, onNodesChange] \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 useNodesState\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (nodes);\
+  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  [edgesState, setEdges, onEdgesChange] \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 useEdgesState\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (edges);\
+  \
+  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 useKeyboardShortcuts\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ();\
+  \
+  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 onConnect\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (params\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  Connection) \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =>\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+    
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Auto-generate path IDs
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+    \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  edge \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+      \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ...\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 params,\
+      id\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 generateEdgeId\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (params),\
+      animated\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 true\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+    \};\
+    \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 storeAddEdge\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (edge);\
+  \};\
+  \
+  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 return\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (\
+    \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 <\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 div style\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \{\{ width\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 '100vw'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 , height\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 '100vh'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \}\}\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 >\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+      \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 <\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ReactFlow\
+        nodes\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \{nodesState\}\
+        edges\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \{edgesState\}\
+        onNodesChange\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \{onNodesChange\}\
+        onEdgesChange\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \{onEdgesChange\}\
+        onConnect\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \{onConnect\}\
+        nodeTypes\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \{nodeTypes\}\
+        fitView\
+      \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 >\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+        \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 <\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 Controls \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 />\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+        \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 <\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 MiniMap \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 />\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+        \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 <\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 Background variant\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 "dots"\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  gap\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \{\cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 12\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \} size\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \{\cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 1\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \} \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 />\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+      \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 </\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ReactFlow\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 >\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+    \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 </\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 div\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 >\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+  );\
+\}\
+\pard\pardeftab720\sa319\partightenfactor0
+
+\f5\b \cf0 \strokec2 \shad0 utils/pathIdGenerator.ts
+\f0\fs24 \strokec2 \
+\pard\pardeftab720\qc\partightenfactor0
+
+\f2\b0\fs22 \cf3 \strokec3 \
+\pard\pardeftab720\partightenfactor0
+
+\f3\fs26 \cf0 \strokec2 typescript\
+\pard\pardeftab720\partightenfactor0
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 export\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 class\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 PathIdGenerator\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 private\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 static\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  instance\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  PathIdGenerator;\
+  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 private\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  counters\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 Map\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 <\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 , \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 number\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 >\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 new\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 Map\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ();\
+  \
+  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 static\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 getInstance\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ()\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  PathIdGenerator \{\
+    \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 if\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 !\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 PathIdGenerator.instance) \{\
+      PathIdGenerator.instance \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 new\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 PathIdGenerator\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ();\
+    \}\
+    \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 return\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  PathIdGenerator.instance;\
+  \}\
+  \
+  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 generateQuestionPathId\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (\
+    elementCode\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+    subElementCode\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+    level\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 number\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+    parentPath\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ?:\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+  )\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+    \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  base \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 `\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 $\{elementCode\}\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 -\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 $\{subElementCode\}\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 `\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+    \
+    \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 if\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (level \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ===\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 1\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ) \{\
+      \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 return\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 `\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 $\{base\}\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 -Q1`\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+    \}\
+    \
+    \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 if\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (parentPath) \{\
+      
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Extract pattern and generate next ID
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+      \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  parts \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  parentPath.\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 split\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 '-'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 );\
+      \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  answerBase \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  parts[\cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 2\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ];\
+      \
+      \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 if\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (level \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ===\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 2\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ) \{\
+        \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 return\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 `\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 $\{base\}\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 -\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 $\{answerBase\}\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 -Q2`\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+      \} \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 else\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 if\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (level \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ===\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 3\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ) \{\
+        \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  key \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 `\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 $\{base\}\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 -\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 $\{answerBase\}\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 -Q3`\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+        \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  count \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 this\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 .counters.\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 get\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (key) \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ||\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 0\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+        \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 this\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 .counters.\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 set\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (key, count \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 +\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 1\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 );\
+        \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 return\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 `\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 $\{key\}\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 -\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 $\{\cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 String\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 .\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 fromCharCode\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (\cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 65\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 +\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  count)\}\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 `\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+      \}\
+      
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Continue pattern for deeper levels...
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+    \}\
+    \
+    \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 throw\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 new\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 Error\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'Cannot generate path ID without parent reference'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 );\
+  \}\
+  \
+  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 generateAnswerId\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (elementCode\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 , subElementCode\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 )\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+    \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  base \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 `\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 $\{elementCode\}\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 -\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 $\{subElementCode\}\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 `\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+    \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  key \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 `answer-\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 $\{base\}\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 `\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+    \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  count \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 this\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 .counters.\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 get\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (key) \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ||\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 0\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+    \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 this\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 .counters.\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 set\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (key, count \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 +\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 1\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 );\
+    \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 return\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 `\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 $\{base\}\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 -\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 $\{\cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 String\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (count \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 +\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 1\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ).\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 padStart\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (\cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 3\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 , \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 '0'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 )\}\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 `\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+  \}\
+\}\
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f0\b\fs28 \cf0 \strokec2 \shad0 4. Key Features Implementation\
+\pard\pardeftab720\sa319\partightenfactor0
+
+\fs24 \cf0 Keyboard Shortcuts Hook\
+\pard\pardeftab720\qc\partightenfactor0
+
+\f2\b0\fs22 \cf3 \strokec3 \
+\pard\pardeftab720\partightenfactor0
+
+\f3\fs26 \cf0 \strokec2 typescript\
+\pard\pardeftab720\partightenfactor0
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 import\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{ useHotkeys \} \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 from\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'react-hotkeys-hook'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 import\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{ useFlowStore \} \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 from\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 '@/stores/flowStore'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+\
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 export\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 function\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 useKeyboardShortcuts\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 () \{\
+  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{ selectedNodeId, createLinkedQuestion \} \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 useFlowStore\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ();\
+  \
+  
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Tab to create linked question
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 useHotkeys\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'tab'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 , (e) \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =>\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+    e.\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 preventDefault\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ();\
+    \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 if\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (selectedNodeId) \{\
+      \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  selectedNode \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 /* get selected node */
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+      \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  newPosition \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+        x\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  selectedNode.position.x \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 +\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 300\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+        y\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  selectedNode.position.y\
+      \};\
+      \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 createLinkedQuestion\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (selectedNodeId, newPosition);\
+    \}\
+  \});\
+  \
+  
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Delete key
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 useHotkeys\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'delete, backspace'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 , () \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =>\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+    \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 if\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (selectedNodeId) \{\
+      
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Delete selected node
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+    \}\
+  \});\
+  \
+  
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Ctrl+Z for undo
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 useHotkeys\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'ctrl+z, cmd+z'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 , () \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =>\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+    
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Undo logic
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+  \});\
+\}\
+\pard\pardeftab720\sa319\partightenfactor0
+
+\f0\b\fs24 \cf0 \strokec2 \shad0 Excel Import/Export\
+\pard\pardeftab720\qc\partightenfactor0
+
+\f2\b0\fs22 \cf3 \strokec3 \
+\pard\pardeftab720\partightenfactor0
+
+\f3\fs26 \cf0 \strokec2 typescript\
+\pard\pardeftab720\partightenfactor0
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 import\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 *\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 as\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 XLSX\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 from\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'xlsx'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ;\
+\
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 export\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 function\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 parseExcelToFlow\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (file\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  File)\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 Promise\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 <\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 FlowData\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 >\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 return\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 new\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 Promise\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ((resolve, reject) \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =>\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+    \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  reader \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 new\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 FileReader\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ();\
+    \
+    reader.\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 onload\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (e) \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =>\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+      \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  data \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  e.target\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ?.\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 result;\
+      \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  workbook \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 XLSX\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 .\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 read\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (data, \{ type\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'binary'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \});\
+      \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  sheet \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  workbook.Sheets[workbook.SheetNames[\cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 0\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ]];\
+      \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  jsonData \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 XLSX\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 .utils.\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 sheet_to_json\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (sheet);\
+      \
+      
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Convert to flow format
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+      \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{ nodes, edges \} \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 convertToFlowFormat\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (jsonData);\
+      \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 resolve\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (\{ nodes, edges \});\
+    \};\
+    \
+    reader.\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 readAsBinaryString\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (file);\
+  \});\
+\}\
+\
+\cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 function\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 convertToFlowFormat\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (data\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 any\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 [])\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  FlowData \{\
+  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  nodes\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  Node[] \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  [];\
+  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  edges\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  Edge[] \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  [];\
+  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  nodeMap \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 new\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 Map\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 <\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 string\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  Node\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 >\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ();\
+  \
+  
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Group by Path ID
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  grouped \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 groupBy\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (data, \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'Path ID'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 );\
+  \
+  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 Object\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 .\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 entries\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (grouped).\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 forEach\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (([pathId, rows], index) \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =>\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+    \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  firstRow \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  rows[\cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 0\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ];\
+    \
+    
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Create question node
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+    \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  questionNode\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  Node \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+      id\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 `q-\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 $\{pathId\}\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 `\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+      type\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'question'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+      position\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 calculatePosition\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (index, firstRow[\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'Question Level'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ]),\
+      data\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+        pathId,\
+        questionText\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  firstRow[\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'Question'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ],\
+        questionLevel\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  firstRow[\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'Question Level'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ],\
+        elementId\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  firstRow[\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'Element ID'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ],\
+        subElementId\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  firstRow[\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'SubElement ID'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ],\
+      \}\
+    \};\
+    \
+    nodes.\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 push\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (questionNode);\
+    nodeMap.\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 set\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (pathId, questionNode);\
+    \
+    
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Create answer node
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+    \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 const\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  answerNode\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  Node \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+      id\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 `a-\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 $\{pathId\}\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 `\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+      type\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'answer'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+      position\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+        x\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  questionNode.position.x,\
+        y\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  questionNode.position.y \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 +\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf6 \strokec6 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 100\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+      \},\
+      data\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{\
+        answerType\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'single'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+        variants\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  rows.\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 map\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (row \cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 =>\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  (\{\
+          id\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  row[\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'Answer ID'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ],\
+          text\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  row[\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'Answer'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ],\
+          score\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  row[\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'Answer Score'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ],\
+          nextPath\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  row[\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 'Next Path'\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ]\
+        \}))\
+      \}\
+    \};\
+    \
+    nodes.\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 push\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (answerNode);\
+    \
+    
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Connect question to answer
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+    edges.\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 push\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 (\{\
+      id\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 `e-\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 $\{questionNode.id\}\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 -\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 $\{answerNode.id\}\cf8 \strokec8 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 `\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 ,\
+      source\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  questionNode.id,\
+      target\cf7 \strokec7 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 :\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  answerNode.id\
+    \});\
+  \});\
+  \
+  
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // Create edges between answers and next questions
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+  
+\f4\i \cf9 \strokec9 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 // ... implementation
+\f3\i0 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 \
+  \
+  \cf5 \strokec5 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 return\cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0  \{ nodes, edges \};\
+\}\
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f0\b\fs28 \cf0 \strokec2 \shad0 5. Development Steps for Cursor\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0
+\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	1	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Initial Setup
+\f1\b0  
+\f2\fs22 \cf3 \strokec3 \
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0
+\f3\fs26 \cf4 \strokec4 \shad\shadx0\shady-20\shadr0\shado0 \shadc0 {\listtext	2	}Create a new React TypeScript project with the specified structure\
+{\listtext	3	}Install all dependencies listed in the tech stack\
+{\listtext	4	}Set up Tailwind CSS configuration\uc0\u8232 \cf0 \strokec2 \shad0 \uc0\u8232 \u8232 
+\f1\fs24 \
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0
+\f0\b \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	5	}2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Phase 1: Basic Canvas
+\f1\b0 \
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls1\ilvl1\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Implement FlowCanvas component with React Flow\
+\ls1\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Create basic Question and Answer node components\
+\ls1\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Set up Zustand store for state management\
+\ls1\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Implement zoom controls\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0
+\f0\b \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	6	}3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Phase 2: Node Interactions
+\f1\b0 \
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls1\ilvl1\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Add keyboard shortcuts (Tab for new node)\
+\ls1\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Implement drag and drop\
+\ls1\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Create node property panel\
+\ls1\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Add answer variant management\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0
+\f0\b \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	7	}4 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Phase 3: Path ID System
+\f1\b0 \
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls1\ilvl1\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Implement PathIdGenerator\
+\ls1\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Auto-generate IDs on node/edge creation\
+\ls1\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Validate routing integrity\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0
+\f0\b \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	8	}5	\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Phase 4: Import/Export
+\f1\b0 \
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls1\ilvl1\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Excel parser implementation\
+\ls1\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 JSON converter\
+\ls1\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Export functionality\
+\ls1\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Layout engine for imported data\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0
+\f0\b \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	9	}6 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Phase 5: Advanced Features
+\f1\b0 \
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls1\ilvl1\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Undo/redo functionality\
+\ls1\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Auto-save\
+\ls1\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Validation warnings\
+\ls1\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Performance optimization for large flows\
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f0\b\fs28 \cf0 \strokec2 6. Performance Considerations\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls2\ilvl0
+\f1\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Use React.memo for node components\
+\ls2\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Implement viewport culling for large graphs\
+\ls2\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Debounce store updates\
+\ls2\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Use Web Workers for Excel parsing\
+\ls2\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Implement virtual scrolling for node libraries\
+\pard\pardeftab720\sa240\partightenfactor0
+\cf0 \strokec2 This specification provides a complete blueprint for building your question flow tool in Cursor. The modular architecture allows for incremental development while maintaining scalability for large questionnaires.\
+}
