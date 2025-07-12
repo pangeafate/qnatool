@@ -187,6 +187,167 @@ export function LandingScreen({ onEnterApp }: LandingScreenProps) {
         </div>
       </div>
 
+      {/* Interactive Demonstrations */}
+      <div className="bg-gradient-to-br from-slate-50 to-gray-50 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Demonstrations of Interactions
+            </h2>
+            <p className="text-lg text-gray-600">
+              Here are a few things you can do
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Double-Click Navigation Demo */}
+            <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group">
+              <div className="relative h-48 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg mb-4 overflow-hidden">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="relative">
+                    {/* Question Node */}
+                    <div className="group-hover:animate-pulse bg-white border-2 border-blue-200 rounded-lg p-3 shadow-md mb-4 transform group-hover:scale-105 transition-transform duration-500">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span className="text-xs font-semibold text-blue-600">Question</span>
+                      </div>
+                      <div className="text-xs text-gray-700">What's your level?</div>
+                    </div>
+                    
+                    {/* Arrow */}
+                    <div className="flex justify-center mb-4">
+                      <div className="group-hover:animate-bounce">
+                        <ArrowRight className="w-4 h-4 text-blue-500 transform group-hover:translate-x-2 transition-transform duration-500" />
+                      </div>
+                    </div>
+                    
+                    {/* Answer Node */}
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-3 shadow-md transform group-hover:scale-105 group-hover:ring-2 group-hover:ring-purple-300 transition-all duration-500">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        <span className="text-xs font-semibold text-purple-600">Answer</span>
+                      </div>
+                      <div className="text-xs text-gray-700">Beginner</div>
+                    </div>
+                  </div>
+                </div>
+                
+
+              </div>
+              
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Double-Click Navigation
+              </h3>
+              <p className="text-sm text-gray-600">
+                Double-click any node to smoothly focus on the next connected element with zoom animation.
+              </p>
+            </div>
+
+            {/* Single-Click Highlighting Demo */}
+            <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group">
+              <div className="relative h-48 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg mb-4 overflow-hidden">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Main Answer Node */}
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-2 shadow-md transform group-hover:scale-105 group-hover:ring-2 group-hover:ring-purple-300 transition-all duration-500">
+                      <div className="flex items-center space-x-1 mb-1">
+                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
+                        <span className="text-xs font-semibold text-purple-600">Answer</span>
+                      </div>
+                      <div className="text-xs text-gray-700">Main</div>
+                    </div>
+                    
+                    {/* Sibling Node 1 */}
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-2 shadow-md transform group-hover:scale-105 group-hover:bg-green-100 group-hover:border-green-400 group-hover:ring-2 group-hover:ring-green-300 transition-all duration-700 delay-200">
+                      <div className="flex items-center space-x-1 mb-1">
+                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full group-hover:bg-green-500 transition-colors duration-700"></div>
+                        <span className="text-xs font-semibold text-purple-600 group-hover:text-green-600 transition-colors duration-700">Answer</span>
+                      </div>
+                      <div className="text-xs text-gray-700">Sibling 1</div>
+                    </div>
+                    
+                    {/* Sibling Node 2 */}
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-2 shadow-md transform group-hover:scale-105 group-hover:bg-green-100 group-hover:border-green-400 group-hover:ring-2 group-hover:ring-green-300 transition-all duration-700 delay-300">
+                      <div className="flex items-center space-x-1 mb-1">
+                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full group-hover:bg-green-500 transition-colors duration-700"></div>
+                        <span className="text-xs font-semibold text-purple-600 group-hover:text-green-600 transition-colors duration-700">Answer</span>
+                      </div>
+                      <div className="text-xs text-gray-700">Sibling 2</div>
+                    </div>
+                    
+                    {/* Sibling Node 3 */}
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-2 shadow-md transform group-hover:scale-105 group-hover:bg-green-100 group-hover:border-green-400 group-hover:ring-2 group-hover:ring-green-300 transition-all duration-700 delay-400">
+                      <div className="flex items-center space-x-1 mb-1">
+                        <div className="w-1.5 h-1.5 bg-purple-500 rounded-full group-hover:bg-green-500 transition-colors duration-700"></div>
+                        <span className="text-xs font-semibold text-purple-600 group-hover:text-green-600 transition-colors duration-700">Answer</span>
+                      </div>
+                      <div className="text-xs text-gray-700">Sibling 3</div>
+                    </div>
+                  </div>
+                </div>
+                
+
+              </div>
+              
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Sibling Node Highlighting
+              </h3>
+              <p className="text-sm text-gray-600">
+                Single-click highlights all neighboring nodes in green for 3-5 seconds to show relationships.
+              </p>
+            </div>
+
+            {/* Orphan Node Connection Demo */}
+            <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group">
+              <div className="relative h-48 bg-gradient-to-br from-orange-50 to-red-50 rounded-lg mb-4 overflow-hidden">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="relative">
+                    {/* Answer Node */}
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-3 shadow-md mb-4 transform group-hover:scale-105 transition-transform duration-500">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        <span className="text-xs font-semibold text-purple-600">Answer</span>
+                      </div>
+                      <div className="text-xs text-gray-700 mb-2">Advanced</div>
+                      <div className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full group-hover:bg-green-100 group-hover:text-green-800 transition-colors duration-500">
+                        <span className="group-hover:hidden">Topic-Q1-A1</span>
+                        <span className="hidden group-hover:inline">Topic-Q1-A1-E1</span>
+                      </div>
+                    </div>
+                    
+                    {/* Connection Line */}
+                    <div className="flex justify-center mb-4">
+                      <div className="w-0.5 h-6 bg-gray-300 group-hover:bg-green-500 transition-colors duration-500"></div>
+                    </div>
+                    
+                    {/* Outcome Node */}
+                    <div className="bg-gradient-to-br from-orange-50 to-red-50 border-2 border-orange-200 rounded-lg p-3 shadow-md transform group-hover:scale-105 group-hover:bg-gradient-to-br group-hover:from-green-50 group-hover:to-emerald-50 group-hover:border-green-400 group-hover:ring-2 group-hover:ring-green-300 transition-all duration-500">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <div className="w-2 h-2 bg-orange-500 rounded-full group-hover:bg-green-500 transition-colors duration-500"></div>
+                        <span className="text-xs font-semibold text-orange-600 group-hover:text-green-600 transition-colors duration-500">
+                          <span className="group-hover:hidden">Orphan</span>
+                          <span className="hidden group-hover:inline">Outcome</span>
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-700">Expert Path</div>
+                    </div>
+                  </div>
+                </div>
+                
+
+              </div>
+              
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Orphan Node Connection
+              </h3>
+              <p className="text-sm text-gray-600">
+                Connecting orphan nodes turns them green and updates their path IDs automatically.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Answer Types Section */}
       <div className="bg-gradient-to-br from-purple-50 to-pink-50 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
