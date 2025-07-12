@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useFlowStore } from '../../../stores/flowStore';
 
 interface OutcomeNodeData {
@@ -14,7 +15,11 @@ interface OutcomeNodeData {
 }
 
 export default function OutcomeNode({ id, data, selected }: NodeProps<OutcomeNodeData>) {
-  const { setSelectedNodeId, updateNode } = useFlowStore();
+  const { setSelectedNodeId, updateNode, pathDisplaysFolded } = useFlowStore();
+  const [localPathFolded, setLocalPathFolded] = useState<boolean | null>(null);
+
+  // Use local state if set, otherwise use global state
+  const isPathFolded = localPathFolded !== null ? localPathFolded : pathDisplaysFolded;
 
   const handleClick = () => {
     setSelectedNodeId(id);
@@ -60,19 +65,43 @@ export default function OutcomeNode({ id, data, selected }: NodeProps<OutcomeNod
           </span>
         </div>
 
-        {/* Path ID(s) - show primary or multiple paths */}
+        {/* Path ID(s) - foldable display */}
         <div className="text-xs font-mono text-gray-500 bg-gray-50 px-2 py-1 rounded">
           {data.pathIds && data.pathIds.length > 1 ? (
             <div className="space-y-1">
-              <div className="font-semibold text-gray-600">Paths ({data.pathIds.length}):</div>
-              {data.pathIds.map((pathId, index) => (
-                <div key={index} className="text-xs">
-                  {pathId}
+              <div 
+                className="flex items-center justify-between cursor-pointer hover:bg-gray-100 px-1 py-0.5 rounded"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLocalPathFolded(!isPathFolded);
+                }}
+              >
+                <div className="font-semibold text-gray-600">Paths ({data.pathIds.length}):</div>
+                {isPathFolded ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+              </div>
+              {!isPathFolded && (
+                <div className="space-y-1">
+                  {data.pathIds.map((pathId, index) => (
+                    <div key={index} className="text-xs pl-2">
+                      {pathId}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           ) : (
-            data.pathId
+            <div 
+              className="flex items-center justify-between cursor-pointer hover:bg-gray-100 px-1 py-0.5 rounded"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLocalPathFolded(!isPathFolded);
+              }}
+            >
+              <div className="truncate">
+                {isPathFolded ? 'Path: ...' : data.pathId}
+              </div>
+              {isPathFolded ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+            </div>
           )}
         </div>
 

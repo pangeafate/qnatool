@@ -11,7 +11,10 @@ import {
   ArrowRight,
   Sparkles,
   GitBranch,
-  Eye
+  Eye,
+  MousePointer2,
+  Layers,
+  Hash
 } from 'lucide-react';
 
 interface LandingScreenProps {
@@ -75,6 +78,19 @@ export function LandingScreen({ onEnterApp }: LandingScreenProps) {
             </p>
           </div>
 
+          {/* Double-Click Navigation */}
+          <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+            <div className="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center mb-4">
+              <MousePointer2 className="w-6 h-6 text-cyan-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              Double-Click Navigation
+            </h3>
+            <p className="text-gray-600">
+              Double-click any node, answer variant, or combination to instantly focus on the next connected element. Navigate your flow with ease.
+            </p>
+          </div>
+
           {/* Keyboard Shortcuts */}
           <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
@@ -120,13 +136,39 @@ export function LandingScreen({ onEnterApp }: LandingScreenProps) {
           {/* Path ID System */}
           <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
             <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
-              <Zap className="w-6 h-6 text-indigo-600" />
+              <Hash className="w-6 h-6 text-indigo-600" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
               Smart Path IDs
             </h3>
             <p className="text-gray-600">
-              Automatic generation of hierarchical path IDs (Q1, Q2, A1, A2, E1, E2) for questions, answers, and outcomes.
+              Automatic generation of hierarchical path IDs (Q1, Q2, A1, A2, E1, E2) for questions, answers, and outcomes. All paths visible on nodes.
+            </p>
+          </div>
+
+          {/* Answer Combinations */}
+          <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+            <div className="w-12 h-12 bg-rose-100 rounded-lg flex items-center justify-center mb-4">
+              <Layers className="w-6 h-6 text-rose-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              Answer Combinations
+            </h3>
+            <p className="text-gray-600">
+              Create complex multi-select scenarios with combination logic. Generate paths like V1+V2, V1+V3 for sophisticated questionnaire flows.
+            </p>
+          </div>
+
+          {/* Smart Path Propagation */}
+          <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+            <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-4">
+              <Zap className="w-6 h-6 text-teal-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              Smart Path Propagation
+            </h3>
+            <p className="text-gray-600">
+              Intelligent path propagation across all answer types. Single, Multiple, and Combinations modes all generate correct variant paths.
             </p>
           </div>
 
@@ -141,6 +183,79 @@ export function LandingScreen({ onEnterApp }: LandingScreenProps) {
             <p className="text-gray-600">
               50-state history with standard keyboard shortcuts. Never lose your work with comprehensive undo/redo functionality.
             </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Answer Types Section */}
+      <div className="bg-gradient-to-br from-purple-50 to-pink-50 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Answer Types & Modes
+            </h2>
+            <p className="text-lg text-gray-600">
+              Three powerful modes for different questionnaire scenarios
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Single Mode */}
+            <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                Single Mode
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Traditional single-choice questions where users select one answer from multiple options.
+              </p>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-sm text-gray-700 mb-2">Example Path IDs:</div>
+                <div className="text-xs font-mono text-blue-600">Topic-Q1-A1-E1</div>
+                <div className="text-xs font-mono text-blue-600">Topic-Q1-A2-E2</div>
+              </div>
+            </div>
+
+            {/* Multiple Mode */}
+            <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                </div>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                Multiple Mode
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Multi-choice questions where each answer variant creates its own independent path.
+              </p>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-sm text-gray-700 mb-2">Example Path IDs:</div>
+                <div className="text-xs font-mono text-purple-600">Topic-Q1-A1-V1-E1</div>
+                <div className="text-xs font-mono text-purple-600">Topic-Q1-A1-V2-E2</div>
+              </div>
+            </div>
+
+            {/* Combinations Mode */}
+            <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+              <div className="w-12 h-12 bg-rose-100 rounded-lg flex items-center justify-center mb-4">
+                <Layers className="w-6 h-6 text-rose-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                Combinations Mode
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Advanced multi-select with combination logic. Each possible combination of answers creates unique paths.
+              </p>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-sm text-gray-700 mb-2">Example Path IDs:</div>
+                <div className="text-xs font-mono text-rose-600">Topic-Q1-A1-V1+V2-E1</div>
+                <div className="text-xs font-mono text-rose-600">Topic-Q1-A1-V1+V3-E2</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -168,8 +283,13 @@ export function LandingScreen({ onEnterApp }: LandingScreenProps) {
                 <div className="text-sm text-gray-700 mb-3">
                   What is your experience level?
                 </div>
-                <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full inline-block">
-                  Topic-Q1
+                <div className="flex flex-wrap gap-1 justify-center">
+                  <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                    Topic-Q1
+                  </div>
+                  <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                    Topic-Q2
+                  </div>
                 </div>
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -177,7 +297,7 @@ export function LandingScreen({ onEnterApp }: LandingScreenProps) {
                 Question Nodes
               </h3>
               <p className="text-gray-600 text-sm">
-                Blue theme • Single outgoing connection • Contains question text and level information
+                Blue theme • Single outgoing connection • Contains question text and level information • Shows all propagated path IDs
               </p>
             </div>
 
@@ -192,8 +312,13 @@ export function LandingScreen({ onEnterApp }: LandingScreenProps) {
                   <div className="text-xs bg-white rounded px-2 py-1 border">Yes (Score: 1)</div>
                   <div className="text-xs bg-white rounded px-2 py-1 border">No (Score: 0)</div>
                 </div>
-                <div className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full inline-block">
-                  Topic-Q1-A1
+                <div className="flex flex-wrap gap-1 justify-center">
+                  <div className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
+                    Topic-Q1-A1
+                  </div>
+                  <div className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
+                    Topic-Q1-A1-V1
+                  </div>
                 </div>
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -201,7 +326,7 @@ export function LandingScreen({ onEnterApp }: LandingScreenProps) {
                 Answer Nodes
               </h3>
               <p className="text-gray-600 text-sm">
-                Purple theme • Multiple variants • Single or multiple choice modes • Scoring system
+                Purple theme • Three modes: Single, Multiple, Combinations • Scoring system • Shows all propagated path IDs
               </p>
             </div>
 
@@ -215,8 +340,13 @@ export function LandingScreen({ onEnterApp }: LandingScreenProps) {
                 <div className="text-sm text-gray-700 mb-3">
                   You should explore visual tools...
                 </div>
-                <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full inline-block">
-                  Topic-Q1-A1-E1
+                <div className="flex flex-wrap gap-1 justify-center">
+                  <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                    Topic-Q1-A1-E1
+                  </div>
+                  <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                    Topic-Q1-A1-V1-E1
+                  </div>
                 </div>
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -224,8 +354,88 @@ export function LandingScreen({ onEnterApp }: LandingScreenProps) {
                 Outcome Nodes
               </h3>
               <p className="text-gray-600 text-sm">
-                Green theme • End points • Contains recommendations • No outgoing connections
+                Green theme • End points • Contains recommendations • No outgoing connections • Shows all propagated path IDs
               </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation & Interaction */}
+      <div className="bg-gradient-to-br from-cyan-50 to-blue-50 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Navigation & Interaction
+            </h2>
+            <p className="text-lg text-gray-600">
+              Intuitive ways to navigate and interact with your flows
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Double-Click Navigation */}
+            <div className="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow">
+              <div className="w-16 h-16 bg-cyan-100 rounded-lg flex items-center justify-center mb-6 mx-auto">
+                <MousePointer2 className="w-8 h-8 text-cyan-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4 text-center">
+                Double-Click Navigation
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                  <div>
+                    <div className="font-medium text-gray-900">Question Nodes</div>
+                    <div className="text-sm text-gray-600">Double-click to focus on the connected answer node</div>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
+                  <div>
+                    <div className="font-medium text-gray-900">Answer Nodes (Single)</div>
+                    <div className="text-sm text-gray-600">Double-click to focus on the next connected node</div>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
+                  <div>
+                    <div className="font-medium text-gray-900">Answer Variants (Multiple)</div>
+                    <div className="text-sm text-gray-600">Double-click individual variants to follow their path</div>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-rose-500 rounded-full mt-2"></div>
+                  <div>
+                    <div className="font-medium text-gray-900">Combinations</div>
+                    <div className="text-sm text-gray-600">Double-click combination items to navigate their unique paths</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* PathID Display */}
+            <div className="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-shadow">
+              <div className="w-16 h-16 bg-indigo-100 rounded-lg flex items-center justify-center mb-6 mx-auto">
+                <Hash className="w-8 h-8 text-indigo-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4 text-center">
+                PathID Display System
+              </h3>
+              <div className="space-y-4">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="font-medium text-gray-900 mb-2">All Nodes Show Multiple Paths</div>
+                  <div className="text-sm text-gray-600">Every node displays all propagated path IDs as badges, making it easy to track complex flows</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="font-medium text-gray-900 mb-2">Automatic Propagation</div>
+                  <div className="text-sm text-gray-600">Path IDs automatically propagate through the flow, updating connected nodes when changes occur</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="font-medium text-gray-900 mb-2">Smart Variant Generation</div>
+                  <div className="text-sm text-gray-600">Multiple and Combinations modes generate appropriate variant paths (V1, V2, V1+V2, etc.)</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

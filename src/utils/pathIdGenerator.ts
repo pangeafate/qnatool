@@ -270,7 +270,7 @@ export class PathIdGenerator {
       let pathId: string;
       
       if (node.type === 'question') {
-        const questionNumber = this.getQuestionNumberForNode(node.id, parentPathId);
+        const questionNumber = this.getQuestionNumberForNode(node.id, parentPathId, nodes);
         if (parentPathId === null) {
           pathId = `${newTopic}-Q${questionNumber}`;
         } else {
@@ -278,7 +278,7 @@ export class PathIdGenerator {
         }
       } else if (node.type === 'answer') {
         // For answer nodes, we just create the base path - variants will be handled when processing outgoing edges
-        const answerNumber = this.getAnswerNumberForNode(node.id, parentPathId || 'STANDALONE');
+        const answerNumber = this.getAnswerNumberForNode(node.id, parentPathId || 'STANDALONE', nodes);
         pathId = `${parentPathId || 'STANDALONE'}-A${answerNumber}`;
         
         // IMPORTANT: Don't add the answer path to the node's pathIds for Multiple/Combinations
@@ -416,7 +416,7 @@ export class PathIdGenerator {
                 const variantIndices = [];
                 for (let j = 0; j < n; j++) {
                   if (i & (1 << j)) {
-                    variantIndices.push(j);
+                    variantIndices.push(j + 1); // Use 1-based indexing for consistency
                   }
                 }
                 
@@ -448,7 +448,7 @@ export class PathIdGenerator {
         // Skip the normal processing since we handled it above
         continue;
       } else if (node.type === 'outcome') {
-        const outcomeNumber = this.getOutcomeNumberForNode(node.id, parentPathId || 'STANDALONE');
+        const outcomeNumber = this.getOutcomeNumberForNode(node.id, parentPathId || 'STANDALONE', nodes);
         pathId = `${parentPathId || 'STANDALONE'}-E${outcomeNumber}`;
       } else {
         // Fallback for other node types
@@ -524,13 +524,13 @@ export class PathIdGenerator {
         
         let pathId: string;
         if (node.type === 'question') {
-          const questionNumber = this.getQuestionNumberForNode(node.id, 'ORPHAN');
+          const questionNumber = this.getQuestionNumberForNode(node.id, 'ORPHAN', nodes);
           pathId = `ORPHAN-Q${questionNumber}`;
         } else if (node.type === 'answer') {
-          const answerNumber = this.getAnswerNumberForNode(node.id, 'ORPHAN');
+          const answerNumber = this.getAnswerNumberForNode(node.id, 'ORPHAN', nodes);
           pathId = `ORPHAN-A${answerNumber}`;
         } else if (node.type === 'outcome') {
-          const outcomeNumber = this.getOutcomeNumberForNode(node.id, 'ORPHAN');
+          const outcomeNumber = this.getOutcomeNumberForNode(node.id, 'ORPHAN', nodes);
           pathId = `ORPHAN-E${outcomeNumber}`;
         } else {
           pathId = `ORPHAN-NODE`;
@@ -565,105 +565,87 @@ export class PathIdGenerator {
   }
 
   /**
-   * Get next available question number for a given parent path
-   * This ensures hierarchical numbering: each parent has its own Q1, Q2, Q3...
+   * Get sequential question number based on all questions in the flow
+   * Each question gets a unique number: Q1, Q2, Q3, etc.
    */
-  getNextQuestionNumber(parentPathId: string | null): number {
-    const key = `Q-${parentPathId || 'ROOT'}`;
+  getQuestionNumberForNode(nodeId: string, _parentPathId: string | null, nodes: Node[]): number {
+    // Get all question nodes from the flow
+    const questionNodes = nodes.filter((node: Node) => node.type === 'question');
+    
+    // Find the index of this node in the sorted list (by node ID for consistency)
+    const sortedQuestionNodes = questionNodes.sort((a: Node, b: Node) => a.id.localeCompare(b.id));
+    const nodeIndex = sortedQuestionNodes.findIndex((node: Node) => node.id === nodeId);
+    
+    // Return 1-based index
+    return nodeIndex + 1;
+  }
+
+  /**
+   * Get sequential answer number based on all answers in the flow
+   * Each answer gets a unique number: A1, A2, A3, etc.
+   */
+  getAnswerNumberForNode(nodeId: string, _questionPathId: string, nodes: Node[]): number {
+    // Get all answer nodes from the flow
+    const answerNodes = nodes.filter((node: Node) => node.type === 'answer');
+    
+    // Find the index of this node in the sorted list (by node ID for consistency)
+    const sortedAnswerNodes = answerNodes.sort((a: Node, b: Node) => a.id.localeCompare(b.id));
+    const nodeIndex = sortedAnswerNodes.findIndex((node: Node) => node.id === nodeId);
+    
+    // Return 1-based index
+    return nodeIndex + 1;
+  }
+
+  /**
+   * Get sequential outcome number based on all outcomes in the flow
+   * Each outcome gets a unique number: E1, E2, E3, etc.
+   */
+  getOutcomeNumberForNode(nodeId: string, _parentPathId: string | null, nodes: Node[]): number {
+    // Get all outcome nodes from the flow
+    const outcomeNodes = nodes.filter((node: Node) => node.type === 'outcome');
+    
+    // Find the index of this node in the sorted list (by node ID for consistency)
+    const sortedOutcomeNodes = outcomeNodes.sort((a: Node, b: Node) => a.id.localeCompare(b.id));
+    const nodeIndex = sortedOutcomeNodes.findIndex((node: Node) => node.id === nodeId);
+    
+    // Return 1-based index
+    return nodeIndex + 1;
+  }
+
+  /**
+   * Get next available question number - for compatibility with existing code
+   * This method is used by Toolbar and other components
+   */
+  getNextQuestionNumber(_parentPathId: string | null): number {
+    // Use a simple counter for backward compatibility
+    const key = 'Q-NEXT';
     const current = this.counters.get(key) || 0;
     this.counters.set(key, current + 1);
     return current + 1;
   }
 
   /**
-   * Get next available answer number for a given question path
-   * This ensures each question has its own A1, A2, A3...
+   * Get next available answer number - for compatibility with existing code
+   * This method is used by Toolbar and other components
    */
-  getNextAnswerNumber(questionPathId: string): number {
-    const key = `A-${questionPathId}`;
+  getNextAnswerNumber(_questionPathId: string): number {
+    // Use a simple counter for backward compatibility
+    const key = 'A-NEXT';
     const current = this.counters.get(key) || 0;
     this.counters.set(key, current + 1);
     return current + 1;
   }
 
   /**
-   * Get next available outcome number for a given parent path
-   * This ensures each branch has its own E1, E2, E3...
+   * Get next available outcome number - for compatibility with existing code
+   * This method is used by Toolbar and other components
    */
-  getNextOutcomeNumber(parentPathId: string): number {
-    const key = `E-${parentPathId}`;
+  getNextOutcomeNumber(_parentPathId: string): number {
+    // Use a simple counter for backward compatibility
+    const key = 'E-NEXT';
     const current = this.counters.get(key) || 0;
     this.counters.set(key, current + 1);
     return current + 1;
-  }
-
-  /**
-   * Get consistent question number for a specific node ID
-   * This ensures the same node gets the same Q number regardless of path
-   */
-  getQuestionNumberForNode(nodeId: string, parentPathId: string | null): number {
-    const nodeKey = `Q-NODE-${nodeId}`;
-    
-    // If this node already has a number assigned, return it
-    if (this.counters.has(nodeKey)) {
-      return this.counters.get(nodeKey)!;
-    }
-    
-    // Otherwise, generate next number for this parent path
-    const pathKey = `Q-${parentPathId || 'ROOT'}`;
-    const current = this.counters.get(pathKey) || 0;
-    const nextNumber = current + 1;
-    this.counters.set(pathKey, nextNumber);
-    
-    // Store the number for this specific node
-    this.counters.set(nodeKey, nextNumber);
-    return nextNumber;
-  }
-
-  /**
-   * Get consistent answer number for a specific node ID
-   * This ensures the same node gets the same A number regardless of path
-   */
-  getAnswerNumberForNode(nodeId: string, questionPathId: string): number {
-    const nodeKey = `A-NODE-${nodeId}`;
-    
-    // If this node already has a number assigned, return it
-    if (this.counters.has(nodeKey)) {
-      return this.counters.get(nodeKey)!;
-    }
-    
-    // Otherwise, generate next number for this parent path
-    const pathKey = `A-${questionPathId}`;
-    const current = this.counters.get(pathKey) || 0;
-    const nextNumber = current + 1;
-    this.counters.set(pathKey, nextNumber);
-    
-    // Store the number for this specific node
-    this.counters.set(nodeKey, nextNumber);
-    return nextNumber;
-  }
-
-  /**
-   * Get consistent outcome number for a specific node ID
-   * This ensures the same node gets the same E number regardless of path
-   */
-  getOutcomeNumberForNode(nodeId: string, parentPathId: string): number {
-    const nodeKey = `E-NODE-${nodeId}`;
-    
-    // If this node already has a number assigned, return it
-    if (this.counters.has(nodeKey)) {
-      return this.counters.get(nodeKey)!;
-    }
-    
-    // Otherwise, generate next number for this parent path
-    const pathKey = `E-${parentPathId}`;
-    const current = this.counters.get(pathKey) || 0;
-    const nextNumber = current + 1;
-    this.counters.set(pathKey, nextNumber);
-    
-    // Store the number for this specific node
-    this.counters.set(nodeKey, nextNumber);
-    return nextNumber;
   }
 
   /**

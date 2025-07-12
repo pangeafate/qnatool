@@ -21,7 +21,7 @@ export class ExportService {
       
       for (let j = 0; j < n; j++) {
         if (i & (1 << j)) {
-          variantIndices.push(j);
+          variantIndices.push(j + 1); // Use 1-based indexing for consistency
           labels.push(variants[j].text || `Variant ${j + 1}`);
         }
       }

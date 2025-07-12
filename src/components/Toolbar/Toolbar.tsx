@@ -1,6 +1,6 @@
 // import React from 'react';
 import { Node } from 'reactflow';
-import { Download, Upload, Database, Trash2, Layout, HelpCircle, MessageSquare, Target, Share2 } from 'lucide-react';
+import { Download, Upload, Database, Trash2, Layout, HelpCircle, MessageSquare, Target, Share2, Eye, EyeOff } from 'lucide-react';
 import { PathIdGenerator } from '../../utils/pathIdGenerator';
 import { ExportService } from '../../services/exportService';
 import { useFlowStore } from '../../stores/flowStore';
@@ -14,7 +14,7 @@ interface ToolbarProps {
 }
 
 export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes = [] }: ToolbarProps) {
-  const { setEdges, edges, nodes: storeNodes, setNodes, propagatePathToAll } = useFlowStore();
+  const { setEdges, edges, nodes: storeNodes, setNodes, propagatePathToAll, toggleAllMeta, pathDisplaysFolded, combinationSectionsFolded } = useFlowStore();
   
   // Use store nodes if prop nodes are empty/not provided
   const actualNodes = nodes.length > 0 ? nodes : storeNodes;
@@ -372,7 +372,7 @@ export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes =
 
   return (
     <div className="flex flex-wrap items-center gap-2 p-2 bg-white border-b border-gray-200">
-      {/* Group 1: Organize - keep color */}
+      {/* Group 1: Organize and Fold/Unfold - cyan color */}
       <div className="flex items-center gap-1">
         <button
           onClick={organizeNodes}
@@ -381,6 +381,14 @@ export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes =
         >
           <Layout size={16} />
           <span>Organize</span>
+        </button>
+        <button
+          onClick={toggleAllMeta}
+          className="flex items-center justify-center space-x-2 px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 transition-colors text-sm font-medium w-[140px] h-10"
+          title="Toggle visibility of path displays and combination sections"
+        >
+          {pathDisplaysFolded || combinationSectionsFolded ? <Eye size={16} /> : <EyeOff size={16} />}
+          <span>{pathDisplaysFolded || combinationSectionsFolded ? 'Unfold Meta' : 'Fold Meta'}</span>
         </button>
       </div>
       

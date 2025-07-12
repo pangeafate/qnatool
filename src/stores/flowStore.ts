@@ -9,6 +9,10 @@ interface FlowState {
   selectedNodeId: string | null;
   focusNodeId: string | null; // Add this to track which node to focus on
   
+  // Global fold/unfold state
+  pathDisplaysFolded: boolean;
+  combinationSectionsFolded: boolean;
+  
   // Undo/Redo state
   history: Array<{ nodes: Node[]; edges: Edge[] }>;
   historyIndex: number;
@@ -28,13 +32,20 @@ interface FlowState {
   propagateTopicOnConnection: (sourceNodeId: string, targetNodeId: string) => void;
   propagatePathIdOnConnection: (sourceNodeId: string, targetNodeId: string, sourceHandle?: string) => void;
   
-  // Navigation
+  // Focus functionality
   focusOnNode: (nodeId: string) => void;
-  clearFocusNode: () => void; // Add this to clear the focus request
+  clearFocusNode: () => void;
   
-  // Undo/Redo actions
+  // Fold/unfold actions
+  togglePathDisplays: () => void;
+  toggleCombinationSections: () => void;
+  toggleAllMeta: () => void;
+  
+  // Undo/Redo
   undo: () => void;
   redo: () => void;
+  canUndo: () => boolean;
+  canRedo: () => boolean;
   saveToHistory: () => void;
   
   // Path propagation
@@ -53,6 +64,10 @@ export const useFlowStore = create<FlowState>()(
     edges: [],
     selectedNodeId: null,
     focusNodeId: null, // Initialize focusNodeId
+    
+    // Initialize global fold/unfold state
+    pathDisplaysFolded: false,
+    combinationSectionsFolded: false,
     
     // Initialize history
     history: [{ nodes: [], edges: [] }],
@@ -131,7 +146,7 @@ export const useFlowStore = create<FlowState>()(
               // Generate proper sequential path ID for outcome node
               const pathGenerator = PathIdGenerator.getInstance();
               const sourcePathId = sourceNode.data?.pathId || 'PATH';
-              const outcomeNumber = pathGenerator.getOutcomeNumberForNode(edge.target, sourcePathId);
+              const outcomeNumber = pathGenerator.getOutcomeNumberForNode(edge.target, sourcePathId, state.nodes);
               const newPathId = `${sourcePathId}-E${outcomeNumber}`;
               
               state.nodes[targetIndex].data = {
@@ -167,13 +182,48 @@ export const useFlowStore = create<FlowState>()(
       state.selectedNodeId = nodeId;
     }),
     
-    focusOnNode: (nodeId) => set((state) => {
-      state.focusNodeId = nodeId;
-    }),
-
-    clearFocusNode: () => set((state) => {
-      state.focusNodeId = null;
-    }),
+    // Focus functionality
+    focusOnNode: (nodeId) => {
+      set({ focusNodeId: nodeId });
+    },
+    
+    clearFocusNode: () => {
+      set({ focusNodeId: null });
+    },
+    
+    // Fold/unfold actions
+    togglePathDisplays: () => {
+      set((state) => ({
+        pathDisplaysFolded: !state.pathDisplaysFolded
+      }));
+    },
+    
+    toggleCombinationSections: () => {
+      set((state) => ({
+        combinationSectionsFolded: !state.combinationSectionsFolded
+      }));
+    },
+    
+    toggleAllMeta: () => {
+      set((state) => {
+        const newFoldedState = !state.pathDisplaysFolded || !state.combinationSectionsFolded;
+        return {
+          pathDisplaysFolded: newFoldedState,
+          combinationSectionsFolded: newFoldedState
+        };
+      });
+    },
+    
+    // Undo/Redo helper methods
+    canUndo: () => {
+      const state = get();
+      return state.historyIndex > 0;
+    },
+    
+    canRedo: () => {
+      const state = get();
+      return state.historyIndex < state.history.length - 1;
+    },
     
     cleanupDuplicateEdges: () => set((state) => {
       const uniqueEdges: Edge[] = [];
@@ -290,7 +340,7 @@ export const useFlowStore = create<FlowState>()(
             const variantIndices = [];
             for (let j = 0; j < n; j++) {
               if (i & (1 << j)) {
-                variantIndices.push(j);
+                variantIndices.push(j + 1); // Use 1-based indexing for consistency
               }
             }
             
@@ -336,13 +386,13 @@ export const useFlowStore = create<FlowState>()(
       // Since we've already constructed the proper source path with variants/combinations,
       // we just need to append the appropriate target segment
       if (targetNode.type === 'question') {
-        const questionNumber = pathGenerator.getQuestionNumberForNode(targetNodeId, sourcePathId);
+        const questionNumber = pathGenerator.getQuestionNumberForNode(targetNodeId, sourcePathId, state.nodes);
         newPathId = `${sourcePathId}-Q${questionNumber}`;
       } else if (targetNode.type === 'answer') {
-        const answerNumber = pathGenerator.getAnswerNumberForNode(targetNodeId, sourcePathId);
+        const answerNumber = pathGenerator.getAnswerNumberForNode(targetNodeId, sourcePathId, state.nodes);
         newPathId = `${sourcePathId}-A${answerNumber}`;
       } else if (targetNode.type === 'outcome') {
-        const outcomeNumber = pathGenerator.getOutcomeNumberForNode(targetNodeId, sourcePathId);
+        const outcomeNumber = pathGenerator.getOutcomeNumberForNode(targetNodeId, sourcePathId, state.nodes);
         newPathId = `${sourcePathId}-E${outcomeNumber}`;
       } else {
         // Generic fallback

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { useFlowStore } from '../../../stores/flowStore';
 import { AnswerVariant } from '../../../types/flow.types';
 
@@ -28,8 +28,14 @@ interface AnswerNodeData {
 }
 
 export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeData>) {
-  const { setSelectedNodeId, updateNode, nodes, edges, addNode, addEdge, propagateTopicOnConnection, focusOnNode } = useFlowStore();
+  const { setSelectedNodeId, updateNode, nodes, edges, addNode, addEdge, propagateTopicOnConnection, focusOnNode, pathDisplaysFolded, combinationSectionsFolded } = useFlowStore();
   const [answerType, setAnswerType] = useState(data.answerType || 'single');
+  const [localPathFolded, setLocalPathFolded] = useState<boolean | null>(null);
+  const [localCombinationsFolded, setLocalCombinationsFolded] = useState<boolean | null>(null);
+
+  // Use local state if set, otherwise use global state
+  const isPathFolded = localPathFolded !== null ? localPathFolded : pathDisplaysFolded;
+  const isCombinationsFolded = localCombinationsFolded !== null ? localCombinationsFolded : combinationSectionsFolded;
 
   // Sync answerType with data changes
   useEffect(() => {
@@ -216,7 +222,7 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
       const variantIndices: number[] = [];
       for (let j = 0; j < n; j++) {
         if (i & (1 << j)) {
-          variantIndices.push(j);
+          variantIndices.push(j + 1); // Use 1-based indexing for consistency
         }
       }
       
@@ -224,7 +230,7 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
         id: `combo-${i}`,
         variantIndices,
         pathId: `combination-${variantIndices.join('-')}`,
-        label: `Variants ${variantIndices.map(idx => idx + 1).join(' + ')}`
+        label: `Variants ${variantIndices.join(' + ')}`
       };
       
       combinations.push(combination);
@@ -467,23 +473,58 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
           </div>
         </div>
         
-        {/* Path ID(s) - show primary or multiple paths */}
+        {/* Path ID(s) - foldable display */}
         <div className="text-xs font-mono text-gray-500 bg-gray-50 px-2 py-1 rounded">
           {data.pathIds && data.pathIds.length > 0 ? (
             data.pathIds.length > 1 ? (
               <div className="space-y-1">
-                <div className="font-semibold text-gray-600">Paths ({data.pathIds.length}):</div>
-                {data.pathIds.map((pathId, index) => (
-                  <div key={index} className="text-xs">
-                    {pathId}
+                <div 
+                  className="flex items-center justify-between cursor-pointer hover:bg-gray-100 px-1 py-0.5 rounded"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLocalPathFolded(!isPathFolded);
+                  }}
+                >
+                  <div className="font-semibold text-gray-600">Paths ({data.pathIds.length}):</div>
+                  {isPathFolded ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+                </div>
+                {!isPathFolded && (
+                  <div className="space-y-1">
+                    {data.pathIds.map((pathId, index) => (
+                      <div key={index} className="text-xs pl-2">
+                        {pathId}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
             ) : (
-              data.pathIds[0]
+              <div 
+                className="flex items-center justify-between cursor-pointer hover:bg-gray-100 px-1 py-0.5 rounded"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLocalPathFolded(!isPathFolded);
+                }}
+              >
+                <div className="truncate">
+                  {isPathFolded ? 'Path: ...' : data.pathIds[0]}
+                </div>
+                {isPathFolded ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+              </div>
             )
           ) : (
-            data.pathId || 'No path'
+            <div 
+              className="flex items-center justify-between cursor-pointer hover:bg-gray-100 px-1 py-0.5 rounded"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLocalPathFolded(!isPathFolded);
+              }}
+            >
+              <div className="truncate">
+                {isPathFolded ? 'Path: ...' : (data.pathId || 'No path')}
+              </div>
+              {isPathFolded ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+            </div>
           )}
         </div>
         
@@ -591,11 +632,22 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
         {answerType === 'combinations' && currentVariants.length > 1 && (
           <div className="space-y-3 border-t pt-3">
             <div className="bg-yellow-50 rounded-lg p-3 space-y-2">
-              <div className="text-xs text-yellow-700 mb-2">
-                All combinations are active. Connect them to questions:
+              <div 
+                className="flex items-center justify-between cursor-pointer hover:bg-yellow-100 px-2 py-1 rounded"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLocalCombinationsFolded(!isCombinationsFolded);
+                }}
+              >
+                <div className="text-xs text-yellow-700">
+                  All combinations are active. Connect them to questions:
+                </div>
+                {isCombinationsFolded ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
               </div>
               
-              {getCurrentCombinations().map((combination) => {
+                            {!isCombinationsFolded && (
+                <div className="space-y-2">
+                  {getCurrentCombinations().map((combination) => {
                 const isOrphanedCombination = getOrphanedCombinations().some(c => c.id === combination.id);
                 const isConnectedCombination = getConnectedCombinations().some(c => c.id === combination.id);
                 
@@ -670,6 +722,8 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
                   </div>
                 );
               })}
+                </div>
+              )}
             </div>
           </div>
         )}
