@@ -50,7 +50,9 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
     propagateTopicOnConnection,
     propagatePathIdOnConnection,
     selectedNodeId,
-    setNodes
+    setNodes,
+    focusNodeId,
+    clearFocusNode
   } = useFlowStore();
   const [nodesState, setNodesLocal, onNodesChange] = useNodesState(nodes);
   const [edgesState, setEdgesLocal, onEdgesChange] = useEdgesState(edges);
@@ -61,6 +63,28 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
   const bulkUpdateTimeout = React.useRef<number | null>(null);
   
   useKeyboardShortcuts();
+
+  // Handle focus on node requests
+  React.useEffect(() => {
+    if (focusNodeId && reactFlowInstance) {
+      const nodeToFocus = nodesState.find(node => node.id === focusNodeId);
+      if (nodeToFocus) {
+        // Center the view on the specific node
+        reactFlowInstance.fitView({
+          nodes: [nodeToFocus],
+          padding: 0.3, // 30% padding around the node
+          maxZoom: 1.2, // Don't zoom in too much
+          minZoom: 0.5, // Don't zoom out too much
+          duration: 800, // Smooth animation
+        });
+        
+        // Clear the focus request after handling it
+        setTimeout(() => {
+          clearFocusNode();
+        }, 100);
+      }
+    }
+  }, [focusNodeId, nodesState, reactFlowInstance, clearFocusNode]);
 
   // Clean up duplicate edges on mount
   React.useEffect(() => {

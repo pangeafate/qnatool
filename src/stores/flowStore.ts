@@ -7,6 +7,7 @@ interface FlowState {
   nodes: Node[];
   edges: Edge[];
   selectedNodeId: string | null;
+  focusNodeId: string | null; // Add this to track which node to focus on
   
   // Undo/Redo state
   history: Array<{ nodes: Node[]; edges: Edge[] }>;
@@ -26,6 +27,10 @@ interface FlowState {
   recalculateFlowIds: (rootNodeId: string, newTopic: string) => void;
   propagateTopicOnConnection: (sourceNodeId: string, targetNodeId: string) => void;
   propagatePathIdOnConnection: (sourceNodeId: string, targetNodeId: string, sourceHandle?: string) => void;
+  
+  // Navigation
+  focusOnNode: (nodeId: string) => void;
+  clearFocusNode: () => void; // Add this to clear the focus request
   
   // Undo/Redo actions
   undo: () => void;
@@ -47,6 +52,7 @@ export const useFlowStore = create<FlowState>()(
     nodes: [],
     edges: [],
     selectedNodeId: null,
+    focusNodeId: null, // Initialize focusNodeId
     
     // Initialize history
     history: [{ nodes: [], edges: [] }],
@@ -159,6 +165,14 @@ export const useFlowStore = create<FlowState>()(
     
     setSelectedNodeId: (nodeId) => set((state) => {
       state.selectedNodeId = nodeId;
+    }),
+    
+    focusOnNode: (nodeId) => set((state) => {
+      state.focusNodeId = nodeId;
+    }),
+
+    clearFocusNode: () => set((state) => {
+      state.focusNodeId = null;
     }),
     
     cleanupDuplicateEdges: () => set((state) => {
@@ -470,6 +484,7 @@ export const useFlowStore = create<FlowState>()(
       state.nodes = [];
       state.edges = [];
       state.selectedNodeId = null;
+      state.focusNodeId = null; // Clear focus on flow clear
       state.history = [{ nodes: [], edges: [] }];
       state.historyIndex = 0;
       PathIdGenerator.getInstance().reset();

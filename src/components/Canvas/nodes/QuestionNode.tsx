@@ -19,10 +19,24 @@ interface QuestionNodeData {
 }
 
 export default function QuestionNode({ id, data, selected }: NodeProps<QuestionNodeData>) {
-  const { setSelectedNodeId, updateNode, recalculateFlowIds, propagateTopicOnConnection, propagatePathIdOnConnection } = useFlowStore();
+  const { setSelectedNodeId, updateNode, recalculateFlowIds, propagateTopicOnConnection, propagatePathIdOnConnection, focusOnNode, edges } = useFlowStore();
 
   const handleClick = () => {
     setSelectedNodeId(id);
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    // Only handle double-clicks on non-interactive areas
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.closest('input') || target.closest('textarea')) {
+      return;
+    }
+
+    // Find the next connected node
+    const outgoingEdge = edges.find(edge => edge.source === id);
+    if (outgoingEdge) {
+      focusOnNode(outgoingEdge.target);
+    }
   };
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -120,6 +134,7 @@ export default function QuestionNode({ id, data, selected }: NodeProps<QuestionN
         transition-all duration-200 hover:shadow-xl cursor-pointer
       `}
       onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
     >
       {/* Input Handle (top) - Gray entry dot */}
       <Handle

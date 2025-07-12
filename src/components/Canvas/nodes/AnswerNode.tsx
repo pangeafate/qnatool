@@ -28,7 +28,7 @@ interface AnswerNodeData {
 }
 
 export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeData>) {
-  const { setSelectedNodeId, updateNode, nodes, edges, addNode, addEdge, propagateTopicOnConnection } = useFlowStore();
+  const { setSelectedNodeId, updateNode, nodes, edges, addNode, addEdge, propagateTopicOnConnection, focusOnNode } = useFlowStore();
   const [answerType, setAnswerType] = useState(data.answerType || 'single');
 
   // Sync answerType with data changes
@@ -38,6 +38,56 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
 
   const handleClick = () => {
     setSelectedNodeId(id);
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    // Only handle double-clicks on non-interactive areas for single mode
+    if (answerType !== 'single') return;
+    
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.closest('input') || target.closest('textarea') || target.closest('button')) {
+      return;
+    }
+
+    // Find the next connected node via default handle for single mode
+    const outgoingEdge = edges.find(edge => edge.source === id && edge.sourceHandle === 'default');
+    if (outgoingEdge) {
+      focusOnNode(outgoingEdge.target);
+    }
+  };
+
+  const handleVariantDoubleClick = (variantIndex: number, e: React.MouseEvent) => {
+    // Only for multiple mode
+    if (answerType !== 'multiple') return;
+
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.closest('input') || target.closest('textarea') || target.closest('button')) {
+      return;
+    }
+
+    // Find the next connected node via variant handle
+    const variantHandle = `variant-${variantIndex}`;
+    const outgoingEdge = edges.find(edge => edge.source === id && edge.sourceHandle === variantHandle);
+    if (outgoingEdge) {
+      focusOnNode(outgoingEdge.target);
+    }
+  };
+
+  const handleCombinationDoubleClick = (combinationId: string, e: React.MouseEvent) => {
+    // Only for combinations mode
+    if (answerType !== 'combinations') return;
+
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.closest('input') || target.closest('textarea') || target.closest('button')) {
+      return;
+    }
+
+    // Find the next connected node via combination handle
+    const combinationHandle = `combination-${combinationId}`;
+    const outgoingEdge = edges.find(edge => edge.source === id && edge.sourceHandle === combinationHandle);
+    if (outgoingEdge) {
+      focusOnNode(outgoingEdge.target);
+    }
   };
 
   const createLinkedQuestionNode = (sourceHandle?: string) => {
@@ -357,6 +407,7 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
         transition-all duration-200 hover:shadow-xl cursor-pointer relative
       `}
       onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
     >
       {/* Input Handle (top) */}
       <Handle
@@ -463,8 +514,9 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
                   className={`flex items-center space-x-2 bg-white rounded-lg p-3 shadow-sm border ${
                     answerType === 'multiple' ? 'border-green-200 hover:border-green-300' : 'border-gray-100'
                   } ${isOrphanedVariant ? 'ring-1 ring-orange-400 border-orange-300' : ''} transition-colors`}
-                  onClick={stopPropagation}
-                  onMouseDown={stopPropagation}
+                                      onClick={stopPropagation}
+                    onMouseDown={stopPropagation}
+                    onDoubleClick={(e) => handleVariantDoubleClick(index, e)}
                 >
                   <input
                     type="text"
@@ -554,8 +606,9 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
                         isConnectedCombination ? 'border-green-300 bg-green-50' : 
                         isOrphanedCombination ? 'border-orange-300 bg-orange-50' : 'border-gray-200'
                       }`}
-                      onClick={stopPropagation}
-                      onMouseDown={stopPropagation}
+                                              onClick={stopPropagation}
+                        onMouseDown={stopPropagation}
+                        onDoubleClick={(e) => handleCombinationDoubleClick(combination.id, e)}
                     >
                       <div className="flex-1">
                         <div className="text-sm font-medium text-gray-900">
