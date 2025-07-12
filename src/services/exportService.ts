@@ -3,6 +3,44 @@ import { QuestionFlowExport, AnswerVariant } from '../types/flow.types';
 
 export class ExportService {
   /**
+   * Generate all possible combinations for a set of variants
+   */
+  private generateCombinationsForNode(variants: AnswerVariant[]): Array<{
+    id: string;
+    variantIndices: number[];
+    pathId: string;
+    label: string;
+  }> {
+    const combinations = [];
+    const n = variants.length;
+    
+    // Generate all possible combinations (2^n - 1, excluding empty set)
+    for (let i = 1; i < Math.pow(2, n); i++) {
+      const variantIndices: number[] = [];
+      const labels: string[] = [];
+      
+      for (let j = 0; j < n; j++) {
+        if (i & (1 << j)) {
+          variantIndices.push(j);
+          labels.push(variants[j].text || `Variant ${j + 1}`);
+        }
+      }
+      
+      // Create combination
+      const combination = {
+        id: `combo-${i}`,
+        variantIndices,
+        pathId: `PATH-V${variantIndices.join('+V')}`, // Will be updated during path propagation
+        label: labels.join(' + ')
+      };
+      
+      combinations.push(combination);
+    }
+    
+    return combinations;
+  }
+
+  /**
    * Export flow data to the new hierarchical JSON format
    */
   exportToJson(nodes: Node[], edges: Edge[]): QuestionFlowExport {
@@ -31,6 +69,7 @@ export class ExportService {
         id: node.id,
         type: 'question',
         pathId: node.data.pathId,
+        pathIds: node.data.pathIds && node.data.pathIds.length > 1 ? node.data.pathIds : undefined,
         content: node.data.questionText,
         level: node.data.questionLevel,
         position: node.position, // Preserve position
@@ -44,6 +83,7 @@ export class ExportService {
         id: node.id,
         type: 'answer',
         pathId: node.data.pathId,
+        pathIds: node.data.pathIds && node.data.pathIds.length > 1 ? node.data.pathIds : undefined,
         content: `${node.data.variants?.length || 0} variants`,
         level: 0, // Answers don't have levels
         position: node.position, // Preserve position
@@ -56,6 +96,8 @@ export class ExportService {
           allowsInput: v.allowsInput,
           inputValidation: v.inputValidation,
         })),
+        // Include combination data for proper reconstruction
+        combinations: node.data.answerType === 'combinations' ? this.generateCombinationsForNode(node.data.variants || []) : undefined,
         combinationRules: node.data.combinationRules,
       };
     });
@@ -66,6 +108,7 @@ export class ExportService {
         id: node.id,
         type: 'outcome',
         pathId: node.data.pathId,
+        pathIds: node.data.pathIds && node.data.pathIds.length > 1 ? node.data.pathIds : undefined,
         content: node.data.recommendation || 'No recommendation provided',
         level: 0, // Outcomes don't have levels
         position: node.position, // Preserve position
@@ -95,6 +138,12 @@ export class ExportService {
           navigation[edge.source].variants = {};
         }
         navigation[edge.source].variants![edge.sourceHandle] = targetNode.data.pathId;
+      } else if (edge.sourceHandle && edge.sourceHandle.startsWith('combination-')) {
+        // Combination-specific navigation
+        if (!navigation[edge.source].combinations) {
+          navigation[edge.source].combinations = {};
+        }
+        navigation[edge.source].combinations![edge.sourceHandle] = targetNode.data.pathId;
       } else {
         // Default navigation
         navigation[edge.source].default = targetNode.data.pathId;
@@ -103,7 +152,7 @@ export class ExportService {
     
     // Process multiple choice rules
     answerNodes.forEach(node => {
-      if (node.data.answerType === 'multiple' && node.data.combinationRules) {
+      if ((node.data.answerType === 'multiple' || node.data.answerType === 'combinations') && node.data.combinationRules) {
         multipleChoiceRules[node.id] = node.data.combinationRules.map((rule: any, index: number) => ({
           condition: rule.selectedVariants,
           nextNode: rule.nextNode,
@@ -135,6 +184,7 @@ export class ExportService {
   private convertToCSV(flowData: QuestionFlowExport): string {
     const headers = [
       'Path ID',
+      'All Path IDs',
       'Clean Path ID',
       'Type',
       'Content',
@@ -151,6 +201,7 @@ export class ExportService {
       if (node.type === 'question') {
         rows.push([
           node.pathId,
+          node.pathIds ? node.pathIds.join(' | ') : node.pathId,
           this.cleanPathId(node.pathId),
           'Question',
           node.content,
@@ -165,6 +216,7 @@ export class ExportService {
           const nextPath = flowData.navigation[node.id]?.variants?.[`variant-${index}`] || '';
           rows.push([
             node.pathId,
+            node.pathIds ? node.pathIds.join(' | ') : node.pathId,
             this.cleanPathId(node.pathId),
             'Answer',
             variant.text,
@@ -174,9 +226,28 @@ export class ExportService {
             nextPath
           ]);
         });
+        
+        // Add combination rows if the answer type is combinations
+        if (node.answerType === 'combinations' && node.combinations) {
+          node.combinations.forEach((combination) => {
+            const nextPath = flowData.navigation[node.id]?.combinations?.[`combination-${combination.id}`] || '';
+            rows.push([
+              node.pathId,
+              node.pathIds ? node.pathIds.join(' | ') : node.pathId,
+              this.cleanPathId(node.pathId),
+              'Combination',
+              combination.label,
+              '0',
+              combination.label,
+              combination.variantIndices.map(idx => node.variants?.[idx]?.score || 0).reduce((a, b) => a + b, 0).toString(),
+              nextPath
+            ]);
+          });
+        }
       } else if (node.type === 'outcome') {
         rows.push([
           node.pathId,
+          node.pathIds ? node.pathIds.join(' | ') : node.pathId,
           this.cleanPathId(node.pathId),
           'Outcome',
           node.recommendation || 'No recommendation',
@@ -228,6 +299,7 @@ export class ExportService {
           position: position,
           data: {
             pathId: nodeData.pathId,
+            pathIds: nodeData.pathIds || [nodeData.pathId],
             topic: nodeData.topic || 'IMPORTED',
             isRoot: nodeData.level === 1,
             questionText: nodeData.content,
@@ -243,8 +315,10 @@ export class ExportService {
           position: position,
           data: {
             pathId: nodeData.pathId,
+            pathIds: nodeData.pathIds || [nodeData.pathId],
             answerType: nodeData.answerType || 'single',
             variants: nodeData.variants || [],
+            combinations: nodeData.combinations, // Restore combination data
             combinationRules: nodeData.combinationRules,
             topic: nodeData.topic || 'IMPORTED',
           }
@@ -256,6 +330,7 @@ export class ExportService {
           position: position,
           data: {
             pathId: nodeData.pathId,
+            pathIds: nodeData.pathIds || [nodeData.pathId],
             recommendation: nodeData.recommendation || 'No recommendation provided',
             topic: nodeData.topic || 'IMPORTED',
           }
@@ -292,8 +367,96 @@ export class ExportService {
           }
         });
       }
+      
+      if (nav.combinations) {
+        Object.entries(nav.combinations).forEach(([handle, targetPathId]) => {
+          const targetNode = nodes.find(n => n.data.pathId === targetPathId);
+          if (targetNode) {
+            edges.push({
+              id: `edge-${sourceId}-${targetNode.id}-${handle}`,
+              source: sourceId,
+              target: targetNode.id,
+              sourceHandle: handle,
+              animated: true,
+            });
+          }
+        });
+      }
     });
     
     return { nodes, edges };
+  }
+
+  /**
+   * Test method to verify combination export/import functionality
+   */
+  testCombinationExportImport(): boolean {
+    console.log('Testing combination export/import functionality...');
+    
+    // Create test data with combinations
+    const testNodes: Node[] = [
+      {
+        id: 'test-answer-1',
+        type: 'answer',
+        position: { x: 100, y: 100 },
+        data: {
+          pathId: 'Test-A1',
+          pathIds: ['Test-A1'],
+          answerType: 'combinations',
+          variants: [
+            { id: 'var1', text: 'Option A', score: 1 },
+            { id: 'var2', text: 'Option B', score: 2 }
+          ],
+          topic: 'Test'
+        }
+      },
+      {
+        id: 'test-question-1',
+        type: 'question',
+        position: { x: 300, y: 100 },
+        data: {
+          pathId: 'Test-A1-V0+V1-Q1',
+          pathIds: ['Test-A1-V0+V1-Q1'],
+          questionText: 'Test Question',
+          questionLevel: 2,
+          topic: 'Test',
+          isRoot: false,
+          elementId: 'E1',
+          subElementId: 'SE1'
+        }
+      }
+    ];
+    
+    const testEdges: Edge[] = [
+      {
+        id: 'test-edge-1',
+        source: 'test-answer-1',
+        target: 'test-question-1',
+        sourceHandle: 'combination-combo-3', // Combination of both variants
+        animated: true
+      }
+    ];
+    
+    try {
+      // Export
+      const exportData = this.exportToJson(testNodes, testEdges);
+      console.log('Export successful:', {
+        hasNavigationCombinations: !!exportData.navigation['test-answer-1']?.combinations,
+        hasCombinationData: !!exportData.nodes['test-answer-1']?.combinations
+      });
+      
+      // Import
+      const { nodes: importedNodes, edges: importedEdges } = this.importFromJson(exportData);
+      console.log('Import successful:', {
+        nodeCount: importedNodes.length,
+        edgeCount: importedEdges.length,
+        hasCombinationHandle: importedEdges.some(e => e.sourceHandle?.startsWith('combination-'))
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Test failed:', error);
+      return false;
+    }
   }
 } 

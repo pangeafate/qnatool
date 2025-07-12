@@ -25,6 +25,7 @@ interface FlowState {
   cleanupDuplicateEdges: () => void;
   recalculateFlowIds: (rootNodeId: string, newTopic: string) => void;
   propagateTopicOnConnection: (sourceNodeId: string, targetNodeId: string) => void;
+  propagatePathIdOnConnection: (sourceNodeId: string, targetNodeId: string, sourceHandle?: string) => void;
   
   // Undo/Redo actions
   undo: () => void;
@@ -124,7 +125,7 @@ export const useFlowStore = create<FlowState>()(
               // Generate proper sequential path ID for outcome node
               const pathGenerator = PathIdGenerator.getInstance();
               const sourcePathId = sourceNode.data?.pathId || 'PATH';
-              const outcomeNumber = pathGenerator.getNextOutcomeNumber(sourcePathId);
+              const outcomeNumber = pathGenerator.getOutcomeNumberForNode(edge.target, sourcePathId);
               const newPathId = `${sourcePathId}-E${outcomeNumber}`;
               
               state.nodes[targetIndex].data = {
@@ -233,6 +234,128 @@ export const useFlowStore = create<FlowState>()(
           console.log(`Propagated topic "${rootTopic}" to node ${targetNodeId}`);
         }
       }
+    }),
+
+    propagatePathIdOnConnection: (sourceNodeId, targetNodeId, sourceHandle) => set((state) => {
+      const sourceNode = state.nodes.find(n => n.id === sourceNodeId);
+      const targetNode = state.nodes.find(n => n.id === targetNodeId);
+      
+      if (!sourceNode || !targetNode) return;
+      
+      const pathGenerator = PathIdGenerator.getInstance();
+      
+      // For Multiple answer types connecting via variant handles, generate the variant path directly
+      let sourcePathIds: string[] = [];
+      
+      if (sourceNode.data?.answerType === 'multiple' && sourceHandle?.startsWith('variant-')) {
+        // For Multiple answer types, generate the variant path from the base path
+        const basePath = sourceNode.data?.pathId;
+        if (basePath && !basePath.startsWith('ORPHAN-')) {
+          const variantIndex = parseInt(sourceHandle.replace('variant-', ''));
+          const variantPath = `V${variantIndex + 1}`;
+          const sourceVariantPath = `${basePath}-${variantPath}`;
+          sourcePathIds = [sourceVariantPath];
+          
+          console.log(`Generated variant path for Multiple answer: ${sourceVariantPath} from base ${basePath}`);
+        } else {
+          console.log(`Source node ${sourceNodeId} has invalid base path for Multiple variant connection`);
+          return;
+        }
+      } else if (sourceNode.data?.answerType === 'combinations' && sourceHandle?.startsWith('combination-')) {
+        // For Combinations answer types, generate the combination path from the base path
+        const basePath = sourceNode.data?.pathId;
+        if (basePath && !basePath.startsWith('ORPHAN-')) {
+          const combinationId = sourceHandle.replace('combination-', '');
+          const variants = sourceNode.data?.variants || [];
+          
+          // Generate combinations to find the specific one
+          const combinations = [];
+          const n = variants.length;
+          
+          for (let i = 1; i < Math.pow(2, n); i++) {
+            const variantIndices = [];
+            for (let j = 0; j < n; j++) {
+              if (i & (1 << j)) {
+                variantIndices.push(j);
+              }
+            }
+            
+            const combination = {
+              id: `combo-${i}`,
+              variantIndices
+            };
+            
+            combinations.push(combination);
+          }
+          
+          // Find the matching combination
+          const matchingCombination = combinations.find(c => c.id === combinationId);
+          if (matchingCombination) {
+            const variantPath = `V${matchingCombination.variantIndices.join('+V')}`;
+            const sourceCombinationPath = `${basePath}-${variantPath}`;
+            sourcePathIds = [sourceCombinationPath];
+            
+            console.log(`Generated combination path for Combinations answer: ${sourceCombinationPath} from base ${basePath}`);
+          } else {
+            console.log(`Could not find matching combination for ${combinationId}`);
+            return;
+          }
+        } else {
+          console.log(`Source node ${sourceNodeId} has invalid base path for Combinations connection`);
+          return;
+        }
+      } else {
+        // For other answer types or non-variant connections, use existing logic
+        sourcePathIds = sourceNode.data?.pathIds || [sourceNode.data?.pathId].filter(Boolean);
+      }
+      
+      if (sourcePathIds.length === 0) {
+        console.log(`Source node ${sourceNodeId} has no valid path IDs for propagation`);
+        return;
+      }
+      
+      // Process each source path ID to generate corresponding target path IDs
+      sourcePathIds.forEach((sourcePathId: string) => {
+      
+      let newPathId: string;
+      
+      // Since we've already constructed the proper source path with variants/combinations,
+      // we just need to append the appropriate target segment
+      if (targetNode.type === 'question') {
+        const questionNumber = pathGenerator.getQuestionNumberForNode(targetNodeId, sourcePathId);
+        newPathId = `${sourcePathId}-Q${questionNumber}`;
+      } else if (targetNode.type === 'answer') {
+        const answerNumber = pathGenerator.getAnswerNumberForNode(targetNodeId, sourcePathId);
+        newPathId = `${sourcePathId}-A${answerNumber}`;
+      } else if (targetNode.type === 'outcome') {
+        const outcomeNumber = pathGenerator.getOutcomeNumberForNode(targetNodeId, sourcePathId);
+        newPathId = `${sourcePathId}-E${outcomeNumber}`;
+      } else {
+        // Generic fallback
+        newPathId = `${sourcePathId}-NODE`;
+      }
+      
+      // Update target node with multiple path ID support
+      const targetIndex = state.nodes.findIndex(n => n.id === targetNodeId);
+      if (targetIndex !== -1) {
+        const currentPathIds = state.nodes[targetIndex].data?.pathIds || [state.nodes[targetIndex].data?.pathId].filter(Boolean);
+        
+        // Add new path ID if it doesn't already exist
+        if (!currentPathIds.includes(newPathId)) {
+          const updatedPathIds = [...currentPathIds, newPathId];
+          
+          state.nodes[targetIndex].data = {
+            ...state.nodes[targetIndex].data,
+            pathId: newPathId, // Keep primary path ID for backward compatibility
+            pathIds: updatedPathIds // Store all path IDs
+          };
+          
+          console.log(`Added path ID "${newPathId}" to ${targetNode.type} node ${targetNodeId} via handle "${sourceHandle}". Total paths: ${updatedPathIds.length}`);
+        } else {
+          console.log(`Path ID "${newPathId}" already exists for node ${targetNodeId}`);
+        }
+      }
+      }); // Close the forEach loop
     }),
     
     createLinkedQuestion: (parentNodeId, position) => set((state) => {
@@ -412,20 +535,76 @@ export const useFlowStore = create<FlowState>()(
         
         console.log(`Found ${rootNodes.length} root nodes with topics`);
         
-        // For each root node, recalculate path IDs for all connected nodes
-        rootNodes.forEach(rootNode => {
-          const rootTopic = rootNode.data.topic;
-          console.log(`Recalculating path IDs for topic "${rootTopic}" from root node ${rootNode.id}`);
+        // Reset the path generator to ensure clean state
+        const pathGenerator = PathIdGenerator.getInstance();
+        pathGenerator.reset();
+        
+        // If there's only one root node, use its topic
+        if (rootNodes.length === 1) {
+          const rootTopic = rootNodes[0].data.topic;
+          console.log(`Recalculating path IDs for single topic "${rootTopic}"`);
           
-          // Use the PathIdGenerator to recalculate all path IDs
-          const pathGenerator = PathIdGenerator.getInstance();
           const result = pathGenerator.recalculatePathIds(state.nodes, state.edges, rootTopic);
-          
-          // Update the state with the recalculated nodes
           state.nodes = result.nodes as any;
           
           console.log(`Recalculated path IDs for topic "${rootTopic}"`);
-        });
+        } else {
+          // Multiple root nodes - process each topic separately
+          console.log('Multiple root nodes detected - processing each topic separately');
+          
+          // Group nodes by topic
+          const nodesByTopic = new Map<string, Node[]>();
+          const edgesByTopic = new Map<string, Edge[]>();
+          
+          rootNodes.forEach(rootNode => {
+            const topic = rootNode.data.topic;
+            if (!nodesByTopic.has(topic)) {
+              nodesByTopic.set(topic, []);
+              edgesByTopic.set(topic, []);
+            }
+            
+            // Find all nodes connected to this root (breadth-first search)
+            const connectedNodes = new Set<string>();
+            const queue = [rootNode.id];
+            connectedNodes.add(rootNode.id);
+            
+            while (queue.length > 0) {
+              const currentNodeId = queue.shift()!;
+              
+              // Find all edges from this node
+              const outgoingEdges = state.edges.filter(edge => edge.source === currentNodeId);
+              outgoingEdges.forEach(edge => {
+                if (!connectedNodes.has(edge.target)) {
+                  connectedNodes.add(edge.target);
+                  queue.push(edge.target);
+                }
+              });
+            }
+            
+            // Add connected nodes to this topic
+            const topicNodes = state.nodes.filter(node => connectedNodes.has(node.id));
+            const topicEdges = state.edges.filter(edge => 
+              connectedNodes.has(edge.source) && connectedNodes.has(edge.target)
+            );
+            
+            nodesByTopic.set(topic, topicNodes);
+            edgesByTopic.set(topic, topicEdges);
+          });
+          
+          // Process each topic separately
+          let allUpdatedNodes: Node[] = [];
+          
+          nodesByTopic.forEach((topicNodes, topic) => {
+            const topicEdges = edgesByTopic.get(topic) || [];
+            console.log(`Processing topic "${topic}" with ${topicNodes.length} nodes and ${topicEdges.length} edges`);
+            
+            const result = pathGenerator.recalculatePathIds(topicNodes, topicEdges, topic);
+            allUpdatedNodes = allUpdatedNodes.concat(result.nodes);
+          });
+          
+          // Update state with all updated nodes
+          state.nodes = allUpdatedNodes as any;
+        }
         
         console.log('Path ID propagation completed');
       });

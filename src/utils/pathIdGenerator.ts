@@ -104,7 +104,7 @@ export class PathIdGenerator {
   parsePathIdWithVariants(pathId: string): PathIdComponentsWithVariants {
     const parts = pathId.split('-');
     const topic = parts[0];
-    const segments: Array<{ type: 'Q' | 'A' | 'V' | 'E'; number: number }> = [];
+    const segments: Array<{ type: 'Q' | 'A' | 'V' | 'E' | 'VC'; number?: number; numbers?: number[] }> = [];
     
     for (let i = 1; i < parts.length; i++) {
       const part = parts[i];
@@ -112,6 +112,10 @@ export class PathIdGenerator {
         segments.push({ type: 'Q', number: parseInt(part.substring(1)) });
       } else if (part.startsWith('A')) {
         segments.push({ type: 'A', number: parseInt(part.substring(1)) });
+      } else if (part.startsWith('V') && part.includes('+V')) {
+        // Handle combination variants like V0+V1
+        const variantNumbers = part.substring(1).split('+V').map(n => parseInt(n));
+        segments.push({ type: 'VC', numbers: variantNumbers });
       } else if (part.startsWith('V')) {
         segments.push({ type: 'V', number: parseInt(part.substring(1)) });
       } else if (part.startsWith('E')) {
@@ -185,24 +189,30 @@ export class PathIdGenerator {
     edges: Edge[],
     newTopic: string
   ): { nodes: Node[], registry: PathRegistry } {
-    const updatedNodes: Node[] = [];
     const newRegistry: PathRegistry = {
       nodeToPathsMap: new Map(),
       pathToNodeMap: new Map(),
     };
 
-    // First pass: identify root nodes and build hierarchy
+    // Build maps for quick access
     const nodeMap = new Map<string, Node>();
-    const edgeMap = new Map<string, Edge[]>();
+    const outgoingEdgeMap = new Map<string, Edge[]>();
+    const incomingEdgeMap = new Map<string, Edge[]>();
     
     nodes.forEach(node => {
       nodeMap.set(node.id, node);
     });
     
     edges.forEach(edge => {
-      const sourceEdges = edgeMap.get(edge.source) || [];
+      // Outgoing edges from source
+      const sourceEdges = outgoingEdgeMap.get(edge.source) || [];
       sourceEdges.push(edge);
-      edgeMap.set(edge.source, sourceEdges);
+      outgoingEdgeMap.set(edge.source, sourceEdges);
+      
+      // Incoming edges to target
+      const targetEdges = incomingEdgeMap.get(edge.target) || [];
+      targetEdges.push(edge);
+      incomingEdgeMap.set(edge.target, targetEdges);
     });
 
     // Find root question nodes (no incoming edges)
@@ -214,93 +224,343 @@ export class PathIdGenerator {
     // Reset counters to start fresh
     this.counters.clear();
 
-    // Recursively assign path IDs
-    const processedNodes = new Set<string>();
+    // Create a map to store all updated nodes
+    const updatedNodeMap = new Map<string, Node>();
     
-    const processNode = (
-      node: Node, 
-      parentPathId: string | null = null, 
-      level: number = 1,
-      sourceHandle?: string // Track which variant handle the connection came from
-    ): void => {
-      if (processedNodes.has(node.id)) return;
-      processedNodes.add(node.id);
+    // Initialize all nodes with empty paths
+    nodes.forEach(node => {
+      updatedNodeMap.set(node.id, {
+        ...node,
+        data: {
+          ...node.data,
+          pathIds: [],
+          topic: newTopic,
+        }
+      });
+    });
 
+    // Process paths using BFS to ensure we process all paths to each node
+    const queue: Array<{
+      nodeId: string;
+      parentPathId: string | null;
+      level: number;
+      sourceHandle?: string;
+      sourceNodeId?: string;
+    }> = [];
+
+    // Start with root nodes
+    rootNodes.forEach(rootNode => {
+      queue.push({
+        nodeId: rootNode.id,
+        parentPathId: null,
+        level: 1,
+      });
+    });
+
+    // Track processed path combinations to avoid infinite loops
+    const processedPaths = new Set<string>();
+
+    while (queue.length > 0) {
+      const { nodeId, parentPathId, level } = queue.shift()!;
+      
+      const node = updatedNodeMap.get(nodeId);
+      if (!node) continue;
+
+      // Generate path ID for this specific path
       let pathId: string;
       
       if (node.type === 'question') {
-        // If coming from a variant handle, include variant in path
-        if (sourceHandle && sourceHandle.startsWith('variant-')) {
-          const variantIndex = parseInt(sourceHandle.replace('variant-', ''));
-          const variantPath = `${parentPathId}-V${variantIndex + 1}`;
-          const questionNumber = this.getNextQuestionNumber(variantPath);
-          pathId = `${variantPath}-Q${questionNumber}`;
+        const questionNumber = this.getQuestionNumberForNode(node.id, parentPathId);
+        if (parentPathId === null) {
+          pathId = `${newTopic}-Q${questionNumber}`;
         } else {
-          // Regular question path
-          const questionNumber = this.getNextQuestionNumber(parentPathId);
-          if (parentPathId === null) {
-            pathId = `${newTopic}-Q${questionNumber}`;
-          } else {
-            pathId = `${parentPathId}-Q${questionNumber}`;
-          }
+          pathId = `${parentPathId}-Q${questionNumber}`;
         }
       } else if (node.type === 'answer') {
-        // Use hierarchical counter for answers
-        const answerNumber = this.getNextAnswerNumber(parentPathId || 'STANDALONE');
+        // For answer nodes, we just create the base path - variants will be handled when processing outgoing edges
+        const answerNumber = this.getAnswerNumberForNode(node.id, parentPathId || 'STANDALONE');
         pathId = `${parentPathId || 'STANDALONE'}-A${answerNumber}`;
+        
+        // IMPORTANT: Don't add the answer path to the node's pathIds for Multiple/Combinations
+        // The path will only be used as a base for variant paths
+        if (node.data?.answerType === 'single') {
+          // Only for Single answer type, we add the direct path
+          const pathKey = `${nodeId}:${pathId}`;
+          if (!processedPaths.has(pathKey)) {
+            processedPaths.add(pathKey);
+            
+            const currentNode = updatedNodeMap.get(nodeId)!;
+            const currentPathIds = currentNode.data.pathIds || [];
+            if (!currentPathIds.includes(pathId)) {
+              updatedNodeMap.set(nodeId, {
+                ...currentNode,
+                data: {
+                  ...currentNode.data,
+                  pathId: pathId,
+                  primaryPathId: pathId,
+                  pathIds: [...currentPathIds, pathId],
+                  isRoot: false,
+                  questionLevel: level,
+                }
+              });
+              
+              // Register in registry
+              newRegistry.pathToNodeMap.set(pathId, nodeId);
+              const existingPaths = newRegistry.nodeToPathsMap.get(nodeId) || [];
+              if (!existingPaths.includes(pathId)) {
+                newRegistry.nodeToPathsMap.set(nodeId, [...existingPaths, pathId]);
+              }
+            }
+          }
+        } else {
+          // For Multiple/Combinations, generate variant paths and add them to pathIds
+          const currentNode = updatedNodeMap.get(nodeId)!;
+          const existingPathIds = currentNode.data.pathIds || [];
+          const newVariantPaths: string[] = [];
+          
+          // Generate variant paths based on answer type
+          if (node.data?.answerType === 'multiple') {
+            // For Multiple, generate paths for each variant
+            const variants = node.data?.variants || [];
+            variants.forEach((_: any, index: number) => {
+              const variantPath = `${pathId}-V${index + 1}`;
+              if (!existingPathIds.includes(variantPath)) {
+                newVariantPaths.push(variantPath);
+              }
+            });
+          } else if (node.data?.answerType === 'combinations') {
+            // For Combinations, generate paths for each combination
+            const variants = node.data?.variants || [];
+            const n = variants.length;
+            
+            for (let i = 1; i < Math.pow(2, n); i++) {
+              const variantIndices = [];
+              for (let j = 0; j < n; j++) {
+                if (i & (1 << j)) {
+                  variantIndices.push(j + 1); // Use 1-based indexing for display
+                }
+              }
+              const variantPath = `${pathId}-V${variantIndices.join('+V')}`;
+              if (!existingPathIds.includes(variantPath)) {
+                newVariantPaths.push(variantPath);
+              }
+            }
+          }
+          
+          // Combine existing and new paths
+          const allPathIds = [...existingPathIds, ...newVariantPaths];
+          
+          updatedNodeMap.set(nodeId, {
+            ...currentNode,
+            data: {
+              ...currentNode.data,
+              pathId: pathId, // Store base path for reference
+              pathIds: allPathIds, // Include both existing and new variant paths
+              isRoot: false,
+              questionLevel: level,
+            }
+          });
+          
+          // Register new variant paths in registry
+          newVariantPaths.forEach(variantPath => {
+            newRegistry.pathToNodeMap.set(variantPath, nodeId);
+            const existingPaths = newRegistry.nodeToPathsMap.get(nodeId) || [];
+            if (!existingPaths.includes(variantPath)) {
+              newRegistry.nodeToPathsMap.set(nodeId, [...existingPaths, variantPath]);
+            }
+          });
+        }
+        
+        // Process outgoing edges based on answer type
+        const outgoingEdges = outgoingEdgeMap.get(nodeId) || [];
+        
+        if (node.data?.answerType === 'single') {
+          // For Single type, process all edges with the base path
+          outgoingEdges.forEach(edge => {
+            queue.push({
+              nodeId: edge.target,
+              parentPathId: pathId,
+              level: level + 1,
+              sourceHandle: edge.sourceHandle || undefined,
+              sourceNodeId: nodeId,
+            });
+          });
+        } else if (node.data?.answerType === 'multiple') {
+          // For Multiple type, only process variant handles
+          outgoingEdges.forEach(edge => {
+            if (edge.sourceHandle && edge.sourceHandle.startsWith('variant-')) {
+              const variantIndex = parseInt(edge.sourceHandle.replace('variant-', ''));
+              const variantPath = `${pathId}-V${variantIndex + 1}`;
+              
+              queue.push({
+                nodeId: edge.target,
+                parentPathId: variantPath,
+                level: level + 1,
+                sourceHandle: edge.sourceHandle || undefined,
+                sourceNodeId: nodeId,
+              });
+            }
+          });
+        } else if (node.data?.answerType === 'combinations') {
+          // For Combinations type, only process combination handles
+          outgoingEdges.forEach(edge => {
+            if (edge.sourceHandle && edge.sourceHandle.startsWith('combination-')) {
+              const combinationId = edge.sourceHandle.replace('combination-', '');
+              const variants = node.data?.variants || [];
+              
+              // Generate combinations to find the specific one
+              const combinations = [];
+              const n = variants.length;
+              
+              for (let i = 1; i < Math.pow(2, n); i++) {
+                const variantIndices = [];
+                for (let j = 0; j < n; j++) {
+                  if (i & (1 << j)) {
+                    variantIndices.push(j);
+                  }
+                }
+                
+                const combination = {
+                  id: `combo-${i}`,
+                  variantIndices
+                };
+                
+                combinations.push(combination);
+              }
+              
+              // Find the matching combination
+              const matchingCombination = combinations.find(c => c.id === combinationId);
+              if (matchingCombination) {
+                const variantPath = `${pathId}-V${matchingCombination.variantIndices.join('+V')}`;
+                
+                queue.push({
+                  nodeId: edge.target,
+                  parentPathId: variantPath,
+                  level: level + 1,
+                  sourceHandle: edge.sourceHandle || undefined,
+                  sourceNodeId: nodeId,
+                });
+              }
+            }
+          });
+        }
+        
+        // Skip the normal processing since we handled it above
+        continue;
       } else if (node.type === 'outcome') {
-        // Use hierarchical counter for outcomes
-        const outcomeNumber = this.getNextOutcomeNumber(parentPathId || 'STANDALONE');
+        const outcomeNumber = this.getOutcomeNumberForNode(node.id, parentPathId || 'STANDALONE');
         pathId = `${parentPathId || 'STANDALONE'}-E${outcomeNumber}`;
       } else {
         // Fallback for other node types
         pathId = `${parentPathId || 'STANDALONE'}-NODE`;
       }
 
-      // Update node data
-      const updatedNode: Node = {
-        ...node,
-        data: {
-          ...node.data,
-          pathId,
-          topic: newTopic,
-          isRoot: parentPathId === null && node.type === 'question',
-          questionLevel: level,
-        }
-      };
+      // Check if we've already processed this exact path
+      const pathKey = `${nodeId}:${pathId}`;
+      if (processedPaths.has(pathKey)) {
+        continue;
+      }
+      processedPaths.add(pathKey);
 
-      updatedNodes.push(updatedNode);
+      // Add this path to the node's pathIds array (for non-answer nodes or single answer nodes)
+      const currentNode = updatedNodeMap.get(nodeId)!;
+      const currentPathIds = currentNode.data.pathIds || [];
       
+      if (!currentPathIds.includes(pathId)) {
+        const updatedPathIds = [...currentPathIds, pathId];
+        
+        // Determine primary path (shortest or first)
+        const primaryPathId = currentNode.data.primaryPathId;
+        const shouldUpdatePrimary = !primaryPathId || pathId.length < (primaryPathId || '').length;
+        
+        updatedNodeMap.set(nodeId, {
+          ...currentNode,
+          data: {
+            ...currentNode.data,
+            pathId: shouldUpdatePrimary ? pathId : (currentNode.data.pathId || pathId),
+            primaryPathId: shouldUpdatePrimary ? pathId : (primaryPathId || pathId),
+            pathIds: updatedPathIds,
+            isRoot: parentPathId === null && node.type === 'question',
+            questionLevel: level,
+          }
+        });
+      }
+
       // Register in new registry
-      newRegistry.pathToNodeMap.set(pathId, node.id);
-      const existingPaths = newRegistry.nodeToPathsMap.get(node.id) || [];
-      newRegistry.nodeToPathsMap.set(node.id, [...existingPaths, pathId]);
+      newRegistry.pathToNodeMap.set(pathId, nodeId);
+      const existingPaths = newRegistry.nodeToPathsMap.get(nodeId) || [];
+      if (!existingPaths.includes(pathId)) {
+        newRegistry.nodeToPathsMap.set(nodeId, [...existingPaths, pathId]);
+      }
 
-      // Process connected nodes with source handle information
-      const connectedEdges = edgeMap.get(node.id) || [];
-      connectedEdges.forEach(edge => {
-        const targetNode = nodeMap.get(edge.target);
-        if (targetNode && !processedNodes.has(targetNode.id)) {
-          const nextLevel = node.type === 'question' ? level : level + 1;
-          // Pass the source handle to track variant connections
-          processNode(targetNode, pathId, nextLevel, edge.sourceHandle || undefined);
-        }
-      });
-    };
+      // Add all outgoing edges to the queue (for non-answer nodes)
+      if (node.type !== 'answer') {
+        const outgoingEdges = outgoingEdgeMap.get(nodeId) || [];
+        outgoingEdges.forEach(edge => {
+          const targetNode = updatedNodeMap.get(edge.target);
+          if (targetNode) {
+            const nextLevel = node.type === 'question' ? level : level + 1;
+            queue.push({
+              nodeId: edge.target,
+              parentPathId: pathId,
+              level: nextLevel,
+              sourceHandle: edge.sourceHandle || undefined,
+              sourceNodeId: nodeId,
+            });
+          }
+        });
+      }
+    }
 
-    // Process all root nodes
-    rootNodes.forEach(rootNode => {
-      processNode(rootNode, null, 1);
-    });
-
-    // Process any remaining unprocessed nodes
+    // Process any orphaned nodes (not connected to any root)
     nodes.forEach(node => {
-      if (!processedNodes.has(node.id)) {
-        processNode(node, null, 1);
+      const updatedNode = updatedNodeMap.get(node.id);
+      if (updatedNode && (!updatedNode.data.pathIds || updatedNode.data.pathIds.length === 0)) {
+        // For answer nodes with no paths, check if they should have paths
+        if (node.type === 'answer' && (node.data?.answerType === 'multiple' || node.data?.answerType === 'combinations')) {
+          // These answer types don't store direct paths, so skip
+          return;
+        }
+        
+        let pathId: string;
+        if (node.type === 'question') {
+          const questionNumber = this.getQuestionNumberForNode(node.id, 'ORPHAN');
+          pathId = `ORPHAN-Q${questionNumber}`;
+        } else if (node.type === 'answer') {
+          const answerNumber = this.getAnswerNumberForNode(node.id, 'ORPHAN');
+          pathId = `ORPHAN-A${answerNumber}`;
+        } else if (node.type === 'outcome') {
+          const outcomeNumber = this.getOutcomeNumberForNode(node.id, 'ORPHAN');
+          pathId = `ORPHAN-E${outcomeNumber}`;
+        } else {
+          pathId = `ORPHAN-NODE`;
+        }
+
+        const pathKey = `${node.id}:${pathId}`;
+        if (!processedPaths.has(pathKey)) {
+          processedPaths.add(pathKey);
+          
+          const currentNode = updatedNodeMap.get(node.id)!;
+          updatedNodeMap.set(node.id, {
+            ...currentNode,
+            data: {
+              ...currentNode.data,
+              pathId: pathId,
+              primaryPathId: pathId,
+              pathIds: [pathId],
+              isRoot: false,
+              questionLevel: 1,
+            }
+          });
+
+          newRegistry.pathToNodeMap.set(pathId, node.id);
+          newRegistry.nodeToPathsMap.set(node.id, [pathId]);
+        }
       }
     });
 
     this.pathRegistry = newRegistry;
+    const updatedNodes = Array.from(updatedNodeMap.values());
     return { nodes: updatedNodes, registry: newRegistry };
   }
 
@@ -335,6 +595,75 @@ export class PathIdGenerator {
     const current = this.counters.get(key) || 0;
     this.counters.set(key, current + 1);
     return current + 1;
+  }
+
+  /**
+   * Get consistent question number for a specific node ID
+   * This ensures the same node gets the same Q number regardless of path
+   */
+  getQuestionNumberForNode(nodeId: string, parentPathId: string | null): number {
+    const nodeKey = `Q-NODE-${nodeId}`;
+    
+    // If this node already has a number assigned, return it
+    if (this.counters.has(nodeKey)) {
+      return this.counters.get(nodeKey)!;
+    }
+    
+    // Otherwise, generate next number for this parent path
+    const pathKey = `Q-${parentPathId || 'ROOT'}`;
+    const current = this.counters.get(pathKey) || 0;
+    const nextNumber = current + 1;
+    this.counters.set(pathKey, nextNumber);
+    
+    // Store the number for this specific node
+    this.counters.set(nodeKey, nextNumber);
+    return nextNumber;
+  }
+
+  /**
+   * Get consistent answer number for a specific node ID
+   * This ensures the same node gets the same A number regardless of path
+   */
+  getAnswerNumberForNode(nodeId: string, questionPathId: string): number {
+    const nodeKey = `A-NODE-${nodeId}`;
+    
+    // If this node already has a number assigned, return it
+    if (this.counters.has(nodeKey)) {
+      return this.counters.get(nodeKey)!;
+    }
+    
+    // Otherwise, generate next number for this parent path
+    const pathKey = `A-${questionPathId}`;
+    const current = this.counters.get(pathKey) || 0;
+    const nextNumber = current + 1;
+    this.counters.set(pathKey, nextNumber);
+    
+    // Store the number for this specific node
+    this.counters.set(nodeKey, nextNumber);
+    return nextNumber;
+  }
+
+  /**
+   * Get consistent outcome number for a specific node ID
+   * This ensures the same node gets the same E number regardless of path
+   */
+  getOutcomeNumberForNode(nodeId: string, parentPathId: string): number {
+    const nodeKey = `E-NODE-${nodeId}`;
+    
+    // If this node already has a number assigned, return it
+    if (this.counters.has(nodeKey)) {
+      return this.counters.get(nodeKey)!;
+    }
+    
+    // Otherwise, generate next number for this parent path
+    const pathKey = `E-${parentPathId}`;
+    const current = this.counters.get(pathKey) || 0;
+    const nextNumber = current + 1;
+    this.counters.set(pathKey, nextNumber);
+    
+    // Store the number for this specific node
+    this.counters.set(nodeKey, nextNumber);
+    return nextNumber;
   }
 
   /**
@@ -392,10 +721,13 @@ export class PathIdGenerator {
     
     for (let i = 0; i < components.segments.length; i++) {
       const segment = components.segments[i];
-      currentPath += `-${segment.type}${segment.number}`;
       
-      // If this is a variant segment, find the score
-      if (segment.type === 'V' && i > 0) {
+      if (segment.type === 'Q') {
+        currentPath += `-Q${segment.number}`;
+      } else if (segment.type === 'A') {
+        currentPath += `-A${segment.number}`;
+      } else if (segment.type === 'V' && segment.number !== undefined) {
+        currentPath += `-V${segment.number}`;
         // Get the answer path (everything before the variant)
         const answerPath = currentPath.substring(0, currentPath.lastIndexOf('-V'));
         const answerNodeId = this.getNodeForPath(answerPath);
@@ -410,6 +742,29 @@ export class PathIdGenerator {
             }
           }
         }
+      } else if (segment.type === 'VC' && segment.numbers) {
+        // Handle combination variants
+        const variantPath = `V${segment.numbers.join('+V')}`;
+        currentPath += `-${variantPath}`;
+        
+        // Get the answer path (everything before the variant combination)
+        const answerPath = currentPath.substring(0, currentPath.lastIndexOf('-V'));
+        const answerNodeId = this.getNodeForPath(answerPath);
+        
+        if (answerNodeId) {
+          const answerNode = nodes.find(n => n.id === answerNodeId);
+          if (answerNode && answerNode.data.variants) {
+            // Sum scores for all variants in the combination
+            segment.numbers.forEach((variantNum: number) => {
+              const variant = answerNode.data.variants[variantNum];
+              if (variant) {
+                totalScore += variant.score || 0;
+              }
+            });
+          }
+        }
+      } else if (segment.type === 'E' && segment.number !== undefined) {
+        currentPath += `-E${segment.number}`;
       }
     }
     
@@ -425,7 +780,7 @@ export class PathIdGenerator {
     let currentPath = '';
     
     components.segments.forEach((segment, index) => {
-      if (segment.type === 'Q') {
+      if (segment.type === 'Q' && segment.number !== undefined) {
         currentPath = index === 0 
           ? `${components.topic}-Q${segment.number}`
           : currentPath + `-Q${segment.number}`;
@@ -435,10 +790,10 @@ export class PathIdGenerator {
         if (node) {
           parts.push(`Q${segment.number}: ${node.data.questionText || 'Question'}`);
         }
-      } else if (segment.type === 'A') {
+      } else if (segment.type === 'A' && segment.number !== undefined) {
         currentPath += `-A${segment.number}`;
         parts.push(`Answer ${segment.number}`);
-      } else if (segment.type === 'V') {
+      } else if (segment.type === 'V' && segment.number !== undefined) {
         const prevPath = currentPath;
         currentPath += `-V${segment.number}`;
         
@@ -451,6 +806,25 @@ export class PathIdGenerator {
             parts.push(`→ "${variant.text}"`);
           }
         }
+      } else if (segment.type === 'VC' && segment.numbers) {
+        const prevPath = currentPath;
+        const variantPath = `V${segment.numbers.join('+V')}`;
+        currentPath += `-${variantPath}`;
+        
+        // Find the answer node to get variant texts
+        const answerNodeId = this.getNodeForPath(prevPath);
+        const answerNode = nodes.find(n => n.id === answerNodeId);
+        if (answerNode && answerNode.data.variants) {
+          const variantTexts = segment.numbers
+            .map((num: number) => answerNode.data.variants[num]?.text)
+            .filter(Boolean);
+          if (variantTexts.length > 0) {
+            parts.push(`→ [${variantTexts.join(' + ')}]`);
+          }
+        }
+      } else if (segment.type === 'E' && segment.number !== undefined) {
+        currentPath += `-E${segment.number}`;
+        parts.push(`Outcome ${segment.number}`);
       }
     });
     
@@ -463,7 +837,11 @@ export class PathIdGenerator {
   printPathStructure(nodes: Node[]): void {
     console.log('=== Path Structure Debug ===');
     nodes.forEach(node => {
-      if (node.data.pathId) {
+      if (node.data.pathIds) {
+        console.log(`Node ${node.id} (${node.type}):`);
+        console.log(`  Primary: ${node.data.pathId || node.data.primaryPathId}`);
+        console.log(`  All paths: ${node.data.pathIds.join(', ')}`);
+      } else if (node.data.pathId) {
         console.log(`Node ${node.id} (${node.type}): ${node.data.pathId}`);
       }
     });

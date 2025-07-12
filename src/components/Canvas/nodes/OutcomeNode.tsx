@@ -4,6 +4,7 @@ import { useFlowStore } from '../../../stores/flowStore';
 
 interface OutcomeNodeData {
   pathId: string;
+  pathIds?: string[]; // New: support multiple path IDs
   recommendation: string;
   topic?: string;
   isOrphaned?: boolean;
@@ -59,9 +60,20 @@ export default function OutcomeNode({ id, data, selected }: NodeProps<OutcomeNod
           </span>
         </div>
 
-        {/* Path ID (read-only, small font) */}
+        {/* Path ID(s) - show primary or multiple paths */}
         <div className="text-xs font-mono text-gray-500 bg-gray-50 px-2 py-1 rounded">
-          {data.pathId}
+          {data.pathIds && data.pathIds.length > 1 ? (
+            <div className="space-y-1">
+              <div className="font-semibold text-gray-600">Paths ({data.pathIds.length}):</div>
+              {data.pathIds.map((pathId, index) => (
+                <div key={index} className="text-xs">
+                  {pathId}
+                </div>
+              ))}
+            </div>
+          ) : (
+            data.pathId
+          )}
         </div>
 
         {/* Recommendation Text */}

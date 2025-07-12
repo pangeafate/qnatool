@@ -2,7 +2,8 @@ export interface QuestionNode {
   id: string;
   type: 'question';
   data: {
-    pathId: string;
+    pathId: string; // Keep for backward compatibility
+    pathIds: string[]; // New: support multiple path IDs
     topic: string;
     isRoot: boolean;
     questionText: string;
@@ -18,9 +19,16 @@ export interface AnswerNode {
   id: string;
   type: 'answer';
   data: {
-    pathId: string;
-    answerType: 'single' | 'multiple';
+    pathId: string; // Keep for backward compatibility
+    pathIds: string[]; // New: support multiple path IDs
+    answerType: 'single' | 'multiple' | 'combinations';
     variants: AnswerVariant[];
+    combinations?: Array<{
+      id: string;
+      variantIndices: number[];
+      pathId: string;
+      label: string;
+    }>;
     defaultNextPath?: string;
     combinationRules?: Array<{
       selectedVariants: string[];
@@ -40,6 +48,20 @@ export interface AnswerVariant {
   nextPathOverride?: string;
 }
 
+export interface OutcomeNode {
+  id: string;
+  type: 'outcome';
+  data: {
+    pathId: string; // Keep for backward compatibility
+    pathIds: string[]; // New: support multiple path IDs
+    outcomeText: string;
+    recommendation?: string;
+    score?: number;
+    metadata?: Record<string, any>;
+  };
+  position: { x: number; y: number };
+}
+
 export interface FlowEdge {
   id: string;
   source: string;
@@ -50,11 +72,11 @@ export interface FlowEdge {
 }
 
 export interface FlowData {
-  nodes: (QuestionNode | AnswerNode)[];
+  nodes: (QuestionNode | AnswerNode | OutcomeNode)[];
   edges: FlowEdge[];
 }
 
-export type FlowNode = QuestionNode | AnswerNode;
+export type FlowNode = QuestionNode | AnswerNode | OutcomeNode;
 
 // New Path ID System Types
 export interface PathIdComponents {
@@ -68,8 +90,9 @@ export interface PathIdComponents {
 export interface PathIdComponentsWithVariants {
   topic: string;
   segments: Array<{
-    type: 'Q' | 'A' | 'V' | 'E';
-    number: number;
+    type: 'Q' | 'A' | 'V' | 'E' | 'VC';
+    number?: number;
+    numbers?: number[];
   }>;
 }
 
@@ -99,7 +122,8 @@ export interface QuestionFlowExport {
     [nodeId: string]: {
       id: string;
       type: 'question' | 'answer' | 'outcome';
-      pathId: string;
+      pathId: string; // Primary path ID for backward compatibility
+      pathIds?: string[]; // Multiple path IDs for nodes with multiple paths
       content: string;
       level: number;
       position: { x: number; y: number }; // Add position to preserve layout
@@ -108,13 +132,21 @@ export interface QuestionFlowExport {
       topic?: string;
       
       // For answers
-      answerType?: 'single' | 'multiple';
+      answerType?: 'single' | 'multiple' | 'combinations';
       variants?: Array<{
         id: string;
         text: string;
         score: number;
         allowsInput?: boolean;
         inputValidation?: string;
+      }>;
+      
+      // For combinations
+      combinations?: Array<{
+        id: string;
+        variantIndices: number[];
+        pathId: string;
+        label: string;
       }>;
       
       // Navigation rules for multiple-choice
@@ -134,6 +166,9 @@ export interface QuestionFlowExport {
       default?: string;
       variants?: {
         [variantId: string]: string;
+      };
+      combinations?: {
+        [combinationId: string]: string;
       };
     };
   };

@@ -1,10 +1,10 @@
 import React from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { useFlowStore } from '../../../stores/flowStore';
-import { PathIdGenerator } from '../../../utils/pathIdGenerator';
 
 interface QuestionNodeData {
   pathId: string;
+  pathIds?: string[]; // New: support multiple path IDs
   topic: string;
   isRoot: boolean;
   questionText: string;
@@ -19,7 +19,7 @@ interface QuestionNodeData {
 }
 
 export default function QuestionNode({ id, data, selected }: NodeProps<QuestionNodeData>) {
-  const { setSelectedNodeId, updateNode, recalculateFlowIds, propagateTopicOnConnection } = useFlowStore();
+  const { setSelectedNodeId, updateNode, recalculateFlowIds, propagateTopicOnConnection, propagatePathIdOnConnection } = useFlowStore();
 
   const handleClick = () => {
     setSelectedNodeId(id);
@@ -59,20 +59,6 @@ export default function QuestionNode({ id, data, selected }: NodeProps<QuestionN
     const currentNode = nodes.find(n => n.id === id);
     if (!currentNode) return;
     
-    // Generate proper sequential path ID for the answer node
-    const pathGenerator = PathIdGenerator.getInstance();
-    const answerNumber = pathGenerator.getNextAnswerNumber(data.pathId);
-    const answerPathId = pathGenerator.generateAnswerPathId(
-      {
-        nodeId: id,
-        pathId: data.pathId,
-        parentPathId: null, // Will be determined by path structure
-        level: data.questionLevel || 1,
-        topic: data.topic
-      },
-      answerNumber
-    );
-    
     // Create a new answer node positioned to the right and below the current question
     const newAnswerId = `answer-${Date.now()}`;
     const newAnswerNode = {
@@ -83,7 +69,8 @@ export default function QuestionNode({ id, data, selected }: NodeProps<QuestionN
         y: currentNode.position.y + 150, // And slightly below
       },
       data: {
-        pathId: answerPathId,
+        pathId: 'path-id-will-be-generated', // Will be set by path ID propagation
+        pathIds: [], // Initialize empty pathIds array
         answerType: 'single',
         topic: data.topic, // Pass the topic to answer node
         variants: [
@@ -118,6 +105,9 @@ export default function QuestionNode({ id, data, selected }: NodeProps<QuestionN
     
     // Propagate topic from question to answer
     propagateTopicOnConnection(id, newAnswerId);
+    
+    // Propagate path ID from question to answer
+    propagatePathIdOnConnection(id, newAnswerId);
   };
 
   return (
@@ -153,9 +143,20 @@ export default function QuestionNode({ id, data, selected }: NodeProps<QuestionN
           </span>
         </div>
 
-        {/* Path ID (read-only, small font) */}
+        {/* Path ID(s) - show primary or multiple paths */}
         <div className="text-xs font-mono text-gray-500 bg-gray-50 px-2 py-1 rounded">
-          {data.pathId}
+          {data.pathIds && data.pathIds.length > 1 ? (
+            <div className="space-y-1">
+              <div className="font-semibold text-gray-600">Paths ({data.pathIds.length}):</div>
+              {data.pathIds.map((pathId, index) => (
+                <div key={index} className="text-xs">
+                  {pathId}
+                </div>
+              ))}
+            </div>
+          ) : (
+            data.pathId
+          )}
         </div>
 
         {/* Topic field - show for all root questions */}

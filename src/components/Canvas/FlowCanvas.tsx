@@ -41,9 +41,19 @@ interface FlowCanvasProps {
 }
 
 export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete }: FlowCanvasProps) {
-  const { nodes, edges, addEdge: storeAddEdge, updateNodePosition, deleteEdge: storeDeleteEdge, propagateTopicOnConnection, selectedNodeId, setNodes } = useFlowStore();
+  const { 
+    nodes, 
+    edges, 
+    addEdge: storeAddEdge, 
+    updateNodePosition, 
+    deleteEdge: storeDeleteEdge, 
+    propagateTopicOnConnection,
+    propagatePathIdOnConnection,
+    selectedNodeId,
+    setNodes
+  } = useFlowStore();
   const [nodesState, setNodesLocal, onNodesChange] = useNodesState(nodes);
-  const [edgesState, setEdges, onEdgesChange] = useEdgesState(edges);
+  const [edgesState, setEdgesLocal, onEdgesChange] = useEdgesState(edges);
   const reactFlowInstance = useReactFlow();
   
   // Add a ref to track if we're doing a bulk position update (like organize)
@@ -228,8 +238,8 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
       };
     });
     
-    setEdges(styledEdges);
-  }, [edges, setEdges, selectedNodeId]);
+    setEdgesLocal(styledEdges);
+  }, [edges, setEdgesLocal, selectedNodeId]);
 
   const onConnect = useCallback((params: Connection) => {
     if (!params.source || !params.target) return;
@@ -337,7 +347,10 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
     
     // Propagate topic from source to target
     propagateTopicOnConnection(params.source, params.target);
-  }, [storeAddEdge, edges, propagateTopicOnConnection, nodes]);
+    
+    // Propagate path ID from source to target with source handle information
+    propagatePathIdOnConnection(params.source, params.target, params.sourceHandle || undefined);
+  }, [storeAddEdge, edges, propagateTopicOnConnection, propagatePathIdOnConnection, nodes]);
 
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     useFlowStore.getState().setSelectedNodeId(node.id);

@@ -4,13 +4,22 @@ import { Plus, X } from 'lucide-react';
 import { useFlowStore } from '../../../stores/flowStore';
 import { AnswerVariant } from '../../../types/flow.types';
 
+interface VariantCombination {
+  id: string;
+  variantIndices: number[];
+  pathId: string;
+  label: string;
+}
+
 interface AnswerNodeData {
-  answerType: 'single' | 'multiple';
+  answerType: 'single' | 'multiple' | 'combinations';
   variants: AnswerVariant[];
+  combinations?: VariantCombination[];
   defaultNextPath?: string;
-  topic?: string; // Add topic to the interface
+  topic?: string;
   isOrphaned?: boolean;
   pathId?: string;
+  pathIds?: string[]; // New: support multiple path IDs
   answerLevel?: number;
   isParent?: boolean;
   isChild?: boolean;
@@ -19,7 +28,7 @@ interface AnswerNodeData {
 }
 
 export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeData>) {
-  const { setSelectedNodeId, updateNode, nodes, addNode, addEdge, propagateTopicOnConnection } = useFlowStore();
+  const { setSelectedNodeId, updateNode, nodes, edges, addNode, addEdge, propagateTopicOnConnection } = useFlowStore();
   const [answerType, setAnswerType] = useState(data.answerType || 'single');
 
   // Sync answerType with data changes
@@ -148,33 +157,187 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
     }
   };
 
-  const handleAnswerTypeChange = (newType: 'single' | 'multiple') => {
+  const generateAllCombinations = (variants: AnswerVariant[]): VariantCombination[] => {
+    const combinations: VariantCombination[] = [];
+    const n = variants.length;
+    
+    // Generate all possible combinations (2^n - 1, excluding empty set)
+    for (let i = 1; i < Math.pow(2, n); i++) {
+      const variantIndices: number[] = [];
+      for (let j = 0; j < n; j++) {
+        if (i & (1 << j)) {
+          variantIndices.push(j);
+        }
+      }
+      
+      const combination: VariantCombination = {
+        id: `combo-${i}`,
+        variantIndices,
+        pathId: `combination-${variantIndices.join('-')}`,
+        label: `Variants ${variantIndices.map(idx => idx + 1).join(' + ')}`
+      };
+      
+      combinations.push(combination);
+    }
+    
+    return combinations;
+  };
+
+  const getCurrentCombinations = (): VariantCombination[] => {
+    if (answerType !== 'combinations') return [];
+    
+    const currentVariants = data.variants || [];
+    if (currentVariants.length < 2) return [];
+    
+    // Use stored combinations or generate all possible ones
+    return data.combinations || generateAllCombinations(currentVariants);
+  };
+
+  const getConnectedCombinations = (): VariantCombination[] => {
+    const combinations = getCurrentCombinations();
+    return combinations.filter(combination => {
+      const combinationHandle = `combination-${combination.id}`;
+      return edges.some(edge => edge.source === id && edge.sourceHandle === combinationHandle);
+    });
+  };
+
+  const getOrphanedCombinations = (): VariantCombination[] => {
+    const combinations = getCurrentCombinations();
+    return combinations.filter(combination => {
+      const combinationHandle = `combination-${combination.id}`;
+      return !edges.some(edge => edge.source === id && edge.sourceHandle === combinationHandle);
+    });
+  };
+
+  // Remove unused functions - they're not needed in the current implementation
+  // const getConnectedVariants = (): string[] => { ... };
+  // const getOrphanedVariants = (): string[] => { ... };
+  // const isAnswerNodeOrphaned = (): boolean => { ... };
+
+  const createLinkedQuestionForCombination = (combinationId: string) => {
+    console.log('Creating linked question for combination:', combinationId);
+    
+    // Check if this combination already has a connection
+    const existingConnection = edges.find(edge => 
+      edge.source === id && edge.sourceHandle === `combination-${combinationId}`
+    );
+    
+    if (existingConnection) {
+      console.log('This combination already has a connection. Only one connection per combination is allowed.');
+      return;
+    }
+    
+    // Find the current node to get its position
+    const currentNode = nodes.find(n => n.id === id);
+    if (!currentNode) return;
+    
+    // Get topic from current answer node's data, or find it from parent chain
+    let topic = data.topic;
+    
+    // If topic is not in answer data, traverse up to find it
+    if (!topic) {
+      const findRootTopic = (nodeId: string): string => {
+        const node = nodes.find(n => n.id === nodeId);
+        if (!node) return 'Topic';
+        
+        // If this node has a topic, return it
+        if (node.data?.topic) return node.data.topic;
+        
+        // Otherwise, find parent and recurse
+        const parentEdge = useFlowStore.getState().edges.find(e => e.target === nodeId);
+        if (parentEdge) {
+          return findRootTopic(parentEdge.source);
+        }
+        
+        return 'Topic';
+      };
+      
+      topic = findRootTopic(id);
+    }
+    
+    // Create a new question node positioned to the right for combination handles
+    const newQuestionId = `question-${Date.now()}`;
+    const newQuestionNode = {
+      id: newQuestionId,
+      type: 'question',
+      position: {
+        x: currentNode.position.x + 200, // To the right for combination handles
+        y: currentNode.position.y + 200, // Below current node
+      },
+      data: {
+        pathId: 'path-id-will-be-generated',
+        topic: topic,
+        isRoot: false,
+        questionText: '',
+        questionLevel: 2, // This should be calculated based on the flow
+        elementId: 'E01',
+        subElementId: 'SE01',
+      },
+    };
+    
+    // Add the node
+    addNode(newQuestionNode);
+    
+    // Create edge from answer to question
+    const edge = {
+      id: `edge-${id}-${newQuestionId}`,
+      source: id,
+      target: newQuestionId,
+      sourceHandle: `combination-${combinationId}`, // Use specific combination handle
+      targetHandle: null, // To top of question
+      animated: true,
+      type: 'smoothstep',
+      style: { 
+        stroke: '#9ca3af', // Light grey by default
+        strokeWidth: 2 
+      }
+    };
+    
+    addEdge(edge);
+    
+    // Propagate topic from answer to question
+    propagateTopicOnConnection(id, newQuestionId);
+  };
+
+  const handleAnswerTypeChange = (newType: 'single' | 'multiple' | 'combinations') => {
     setAnswerType(newType);
     updateNode(id, { answerType: newType });
     
-    // Clean up existing edges when switching modes
-    const { edges, deleteEdge } = useFlowStore.getState();
+    // Clean up ALL outgoing edges and pathIDs when switching modes
+    const { edges, deleteEdge, nodes, updateNode: updateNodeInStore } = useFlowStore.getState();
     
-    if (newType === 'single') {
-      // Remove all variant-based edges when switching to single
-      const variantEdges = edges.filter(edge => 
-        edge.source === id && 
-        edge.sourceHandle && 
-        edge.sourceHandle.startsWith('variant-')
-      );
-      
-      console.log(`Switching to single mode: removing ${variantEdges.length} variant edges`);
-      variantEdges.forEach(edge => deleteEdge(edge.id));
-    } else {
-      // Remove default edge when switching to multiple
-      const defaultEdges = edges.filter(edge => 
-        edge.source === id && 
-        edge.sourceHandle === 'default'
-      );
-      
-      console.log(`Switching to multiple mode: removing ${defaultEdges.length} default edges`);
-      defaultEdges.forEach(edge => deleteEdge(edge.id));
-    }
+    // Find all outgoing edges from this answer node
+    const outgoingEdges = edges.filter(edge => edge.source === id);
+    
+    console.log(`Switching to ${newType} mode: removing ${outgoingEdges.length} outgoing edges and cleaning up pathIDs`);
+    
+    // Clean up pathIDs from target nodes BEFORE removing edges
+    outgoingEdges.forEach(edge => {
+      const targetNode = nodes.find(n => n.id === edge.target);
+      if (targetNode) {
+        const currentPathIds = targetNode.data?.pathIds || [targetNode.data?.pathId].filter(Boolean);
+        
+        // Remove only pathIDs that were coming from this answer node
+        // PathIDs from this node will contain this node's pathId as a prefix
+        const sourcePathId = data.pathId;
+        if (sourcePathId) {
+                     const filteredPathIds = currentPathIds.filter((pathId: string) => 
+             !pathId.startsWith(sourcePathId)
+           );
+          
+          // Update target node with cleaned pathIDs
+          updateNodeInStore(edge.target, {
+            pathId: filteredPathIds.length > 0 ? filteredPathIds[0] : undefined,
+            pathIds: filteredPathIds.length > 0 ? filteredPathIds : []
+          });
+          
+          console.log(`Cleaned pathIDs for target node ${edge.target}: removed paths starting with ${sourcePathId}`);
+        }
+      }
+    });
+    
+    // Remove all outgoing edges
+    outgoingEdges.forEach(edge => deleteEdge(edge.id));
   };
 
   // Only stop propagation, don't prevent default!
@@ -225,7 +388,7 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
                 type="radio"
                 value="single"
                 checked={answerType === 'single'}
-                onChange={(e) => handleAnswerTypeChange(e.target.value as 'single' | 'multiple')}
+                onChange={(e) => handleAnswerTypeChange(e.target.value as 'single' | 'multiple' | 'combinations')}
                 className="mr-1"
               />
               Single
@@ -235,30 +398,57 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
                 type="radio"
                 value="multiple"
                 checked={answerType === 'multiple'}
-                onChange={(e) => handleAnswerTypeChange(e.target.value as 'single' | 'multiple')}
+                onChange={(e) => handleAnswerTypeChange(e.target.value as 'single' | 'multiple' | 'combinations')}
                 className="mr-1"
               />
               Multiple
             </label>
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="radio"
+                value="combinations"
+                checked={answerType === 'combinations'}
+                onChange={(e) => handleAnswerTypeChange(e.target.value as 'single' | 'multiple' | 'combinations')}
+                className="mr-1"
+              />
+              Combinations
+            </label>
           </div>
         </div>
         
-        {/* Path ID (read-only, small font) */}
-        {data.pathId && (
-          <div className="text-xs font-mono text-gray-500 bg-gray-50 px-2 py-1 rounded">
-            {data.pathId}
-          </div>
-        )}
+        {/* Path ID(s) - show primary or multiple paths */}
+        <div className="text-xs font-mono text-gray-500 bg-gray-50 px-2 py-1 rounded">
+          {data.pathIds && data.pathIds.length > 0 ? (
+            data.pathIds.length > 1 ? (
+              <div className="space-y-1">
+                <div className="font-semibold text-gray-600">Paths ({data.pathIds.length}):</div>
+                {data.pathIds.map((pathId, index) => (
+                  <div key={index} className="text-xs">
+                    {pathId}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              data.pathIds[0]
+            )
+          ) : (
+            data.pathId || 'No path'
+          )}
+        </div>
         
         {/* Connection mode indicator */}
         <div className={`text-xs rounded px-2 py-1 text-center font-medium ${
           answerType === 'single' 
             ? 'bg-blue-50 text-blue-600' 
-            : 'bg-green-50 text-green-600'
+            : answerType === 'multiple'
+              ? 'bg-green-50 text-green-600'
+              : 'bg-yellow-50 text-yellow-600'
         }`}>
           {answerType === 'single' 
             ? '↓ Single path (bottom)' 
-            : '→ Multiple paths (variants)'}
+            : answerType === 'multiple'
+              ? '→ Multiple paths (variants)'
+              : '→ Combinations (variants)'}
         </div>
         
         {/* Answer Variants */}
@@ -344,6 +534,92 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
             );
           })}
         </div>
+        
+        {/* Combinations Builder - Only show when answerType is 'combinations' */}
+        {answerType === 'combinations' && currentVariants.length > 1 && (
+          <div className="space-y-3 border-t pt-3">
+            <div className="bg-yellow-50 rounded-lg p-3 space-y-2">
+              <div className="text-xs text-yellow-700 mb-2">
+                All combinations are active. Connect them to questions:
+              </div>
+              
+              {getCurrentCombinations().map((combination) => {
+                const isOrphanedCombination = getOrphanedCombinations().some(c => c.id === combination.id);
+                const isConnectedCombination = getConnectedCombinations().some(c => c.id === combination.id);
+                
+                return (
+                  <div key={combination.id} className="relative">
+                    <div 
+                      className={`flex items-center space-x-2 bg-white rounded-lg p-2 shadow-sm border transition-colors ${
+                        isConnectedCombination ? 'border-green-300 bg-green-50' : 
+                        isOrphanedCombination ? 'border-orange-300 bg-orange-50' : 'border-gray-200'
+                      }`}
+                      onClick={stopPropagation}
+                      onMouseDown={stopPropagation}
+                    >
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900">
+                          {combination.label}
+                        </div>
+                        <div className="text-xs text-gray-500 font-mono">
+                          {combination.pathId}
+                        </div>
+                      </div>
+                      
+                      {/* Connection Status */}
+                      <div className="flex items-center space-x-1">
+                        {isConnectedCombination && (
+                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+                            Connected
+                          </span>
+                        )}
+                        {isOrphanedCombination && (
+                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                            Orphaned
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Show variant indices */}
+                      <div className="flex space-x-1">
+                        {combination.variantIndices.map((idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
+                          >
+                            {idx + 1}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Combination handle */}
+                    <Handle
+                      type="source"
+                      position={Position.Right}
+                      id={`combination-${combination.id}`}
+                      style={{ 
+                        top: '50%',
+                        right: '-5px',
+                        transform: 'translateY(-50%)',
+                        background: isOrphanedCombination ? '#fb923c' : '#f59e0b', // Orange for orphaned, amber for connected
+                        width: '10px',
+                        height: '10px',
+                        zIndex: 10,
+                        cursor: 'pointer'
+                      }}
+                      className="border-2 border-white hover:scale-125 transition-transform"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        createLinkedQuestionForCombination(combination.id);
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
         
         {/* Add Answer Button */}
         <button
