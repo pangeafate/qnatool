@@ -608,6 +608,13 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
     }, 50);
   };
 
+  // Handle minimap click for teleportation
+  const onMinimapClick = useCallback((_event: React.MouseEvent, position: { x: number; y: number }) => {
+    if (reactFlowInstance) {
+      reactFlowInstance.setCenter(position.x, position.y, { zoom: reactFlowInstance.getZoom() });
+    }
+  }, [reactFlowInstance]);
+
   return (
     <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100">
       <ReactFlow
@@ -627,10 +634,13 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
         elementsSelectable={true}
         selectNodesOnDrag={false}
         panOnDrag={true}
+        panOnScroll={true}
+        panOnScrollSpeed={0.5}
         zoomOnScroll={true}
         zoomOnPinch={true}
         zoomOnDoubleClick={false}
         preventScrolling={false}
+        panActivationKeyCode={null}
       >
         <Background 
           variant={BackgroundVariant.Dots}
@@ -651,8 +661,9 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
             }
           }}
           maskColor="rgba(255, 255, 255, 0.8)"
-          pannable
-          zoomable
+          pannable={true}
+          zoomable={true}
+          onClick={onMinimapClick}
         />
         
         {/* Custom Panel for Stats */}
