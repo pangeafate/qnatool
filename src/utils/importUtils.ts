@@ -36,7 +36,6 @@ export class ImportUtils {
    */
   static findAvailableSpace(
     existingNodes: Node[],
-    importedNodes: Node[],
     spacing: number = 400
   ): { x: number; y: number } {
     if (existingNodes.length === 0) {
@@ -198,7 +197,7 @@ export class ImportUtils {
     importedEdges: Edge[]
   ): ImportResult {
     // Find available space for imported nodes
-    const basePosition = this.findAvailableSpace(existingNodes, importedNodes);
+    const basePosition = this.findAvailableSpace(existingNodes);
     
     // Adjust positions of imported nodes
     const positionedNodes = this.adjustImportedPositions(importedNodes, basePosition);

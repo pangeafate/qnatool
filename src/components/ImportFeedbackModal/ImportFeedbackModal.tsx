@@ -1,4 +1,3 @@
-import React from 'react';
 import { X, CheckCircle, AlertTriangle, Info } from 'lucide-react';
 import { ImportResult } from '../../utils/importUtils';
 

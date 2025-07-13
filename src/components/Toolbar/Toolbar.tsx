@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Node } from 'reactflow';
 import { Download, Upload, Database, Trash2, Layout, HelpCircle, MessageSquare, Target, Share2, Eye, EyeOff } from 'lucide-react';
 import { PathIdGenerator } from '../../utils/pathIdGenerator';
@@ -16,7 +16,7 @@ interface ToolbarProps {
 }
 
 export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes = [] }: ToolbarProps) {
-  const { setEdges, edges, nodes: storeNodes, setNodes, additiveImport, propagatePathToAll, toggleAllMeta, pathDisplaysFolded, combinationSectionsFolded } = useFlowStore();
+  const { setEdges, edges, nodes: storeNodes, setNodes, propagatePathToAll, toggleAllMeta, pathDisplaysFolded, combinationSectionsFolded } = useFlowStore();
   
   // Use store nodes if prop nodes are empty/not provided
   const actualNodes = nodes.length > 0 ? nodes : storeNodes;
