@@ -316,6 +316,9 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
       }
     }
     
+    // REMOVED: No longer restrict question nodes from receiving multiple incoming connections
+    // This allows multiple answer nodes in single mode to connect to the same question node
+    
     // Check for loop creation
     const wouldCreateLoop = (sourceId: string, targetId: string): boolean => {
       // If source and target are the same, it's a self-loop

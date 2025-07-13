@@ -1,9 +1,11 @@
-// import React from 'react';
+import React, { useState } from 'react';
 import { Node } from 'reactflow';
 import { Download, Upload, Database, Trash2, Layout, HelpCircle, MessageSquare, Target, Share2, Eye, EyeOff } from 'lucide-react';
 import { PathIdGenerator } from '../../utils/pathIdGenerator';
 import { ExportService } from '../../services/exportService';
 import { useFlowStore } from '../../stores/flowStore';
+import { ImportUtils, ImportResult } from '../../utils/importUtils';
+import { ImportFeedbackModal } from '../ImportFeedbackModal/ImportFeedbackModal';
 
 interface ToolbarProps {
   onAddNode?: (node: Node) => void;
@@ -14,10 +16,15 @@ interface ToolbarProps {
 }
 
 export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes = [] }: ToolbarProps) {
-  const { setEdges, edges, nodes: storeNodes, setNodes, propagatePathToAll, toggleAllMeta, pathDisplaysFolded, combinationSectionsFolded } = useFlowStore();
+  const { setEdges, edges, nodes: storeNodes, setNodes, additiveImport, propagatePathToAll, toggleAllMeta, pathDisplaysFolded, combinationSectionsFolded } = useFlowStore();
   
   // Use store nodes if prop nodes are empty/not provided
   const actualNodes = nodes.length > 0 ? nodes : storeNodes;
+  
+  // State for import feedback modal
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [preImportState, setPreImportState] = useState<{ nodes: Node[], edges: any[] } | null>(null);
 
   const getNextPosition = () => {
     const existingPositions = actualNodes.map(node => node.position);
@@ -53,9 +60,13 @@ export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes =
     const pathGenerator = PathIdGenerator.getInstance();
     const position = getNextPosition();
     
+    // Generate unique topic for each root question
+    const existingRootNodes = actualNodes.filter(node => node.data?.isRoot);
+    const topicNumber = existingRootNodes.length + 1;
+    const topic = `TOPIC-${topicNumber}`;
+    
     // Generate proper path ID for root question
-    const questionNumber = pathGenerator.getNextQuestionNumber(null);
-    const topic = 'NEW-TOPIC';
+    const questionNumber = pathGenerator.getNextQuestionNumber(null, topic);
     const pathId = pathGenerator.generateQuestionPathId(null, questionNumber, topic);
     
     const questionNode: Node = {
@@ -162,31 +173,52 @@ export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes =
           try {
             const jsonData = JSON.parse(e.target?.result as string);
             
+            let importedNodes: Node[] = [];
+            let importedEdges: any[] = [];
+            
             // Check if it's the new format
             if (jsonData.metadata && jsonData.nodes && jsonData.navigation) {
               // New hierarchical format
               const exportService = new ExportService();
-              const { nodes: importedNodes, edges: importedEdges } = exportService.importFromJson(jsonData);
-              
-              // Set bulk update flag before updating nodes
-              if ((window as any).flowCanvasSetBulkUpdate) {
-                (window as any).flowCanvasSetBulkUpdate();
-              }
-              
-              onSetNodes?.(importedNodes);
-              setEdges(importedEdges);
+              const result = exportService.importFromJson(jsonData);
+              importedNodes = result.nodes;
+              importedEdges = result.edges;
             } else if (jsonData.nodes && jsonData.edges) {
               // Legacy format
-              // Set bulk update flag before updating nodes
-              if ((window as any).flowCanvasSetBulkUpdate) {
-                (window as any).flowCanvasSetBulkUpdate();
-              }
-              
-              onSetNodes?.(jsonData.nodes);
-              setEdges(jsonData.edges);
+              importedNodes = jsonData.nodes;
+              importedEdges = jsonData.edges;
             } else {
               console.error('Invalid file format');
+              return;
             }
+            
+            // Store current state for potential revert
+            setPreImportState({
+              nodes: [...actualNodes],
+              edges: [...edges]
+            });
+            
+            // Perform additive import with conflict resolution
+            const result = ImportUtils.performAdditiveImport(
+              actualNodes,
+              edges,
+              importedNodes,
+              importedEdges
+            );
+            
+            // Set bulk update flag before updating nodes
+            if ((window as any).flowCanvasSetBulkUpdate) {
+              (window as any).flowCanvasSetBulkUpdate();
+            }
+            
+            // Apply the import result
+            onSetNodes?.(result.nodes);
+            setEdges(result.edges);
+            
+            // Show feedback modal
+            setImportResult(result);
+            setShowImportModal(true);
+            
           } catch (error) {
             console.error('Error importing flow:', error);
           }
@@ -370,6 +402,35 @@ export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes =
     }, 50); // Small delay to ensure flag is set
   };
 
+  const handleImportAccept = () => {
+    // Import is already applied, just close the modal
+    setShowImportModal(false);
+    setImportResult(null);
+    setPreImportState(null);
+  };
+
+  const handleImportRevert = () => {
+    if (preImportState) {
+      // Revert to pre-import state
+      onSetNodes?.(preImportState.nodes);
+      setEdges(preImportState.edges);
+      
+      // Set bulk update flag
+      if ((window as any).flowCanvasSetBulkUpdate) {
+        (window as any).flowCanvasSetBulkUpdate();
+      }
+    }
+    
+    setShowImportModal(false);
+    setImportResult(null);
+    setPreImportState(null);
+  };
+
+  const handleImportClose = () => {
+    // Same as accept - import is already applied
+    handleImportAccept();
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-2 p-2 bg-white border-b border-gray-200">
       {/* Group 1: Organize and Fold/Unfold - cyan color */}
@@ -460,6 +521,15 @@ export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes =
           <span>Clear All</span>
         </button>
       </div>
+      
+      {/* Import Feedback Modal */}
+      <ImportFeedbackModal
+        isOpen={showImportModal}
+        importResult={importResult}
+        onAccept={handleImportAccept}
+        onRevert={handleImportRevert}
+        onClose={handleImportClose}
+      />
     </div>
   );
 }

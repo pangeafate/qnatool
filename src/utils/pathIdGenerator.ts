@@ -616,8 +616,16 @@ export class PathIdGenerator {
    * Get next available question number - for compatibility with existing code
    * This method is used by Toolbar and other components
    */
-  getNextQuestionNumber(_parentPathId: string | null): number {
-    // Use a simple counter for backward compatibility
+  getNextQuestionNumber(parentPathId: string | null, topic?: string): number {
+    // For root questions, use topic-specific counter
+    if (parentPathId === null && topic) {
+      const key = `Q-${topic}`;
+      const current = this.counters.get(key) || 0;
+      this.counters.set(key, current + 1);
+      return current + 1;
+    }
+    
+    // For child questions, use a simple counter for backward compatibility
     const key = 'Q-NEXT';
     const current = this.counters.get(key) || 0;
     this.counters.set(key, current + 1);
