@@ -54,11 +54,8 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
     selectedNodeIds,
     setSelectedEdgeId,
     setSelectedNodeIds,
-    addToSelection,
-    removeFromSelection,
     clearSelection,
     setNodes,
-    setEdges: storeSetEdges,
     focusNodeId,
     clearFocusNode
   } = useFlowStore();

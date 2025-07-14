@@ -142,37 +142,37 @@ export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes =
     return candidateTopic;
   };
 
-  const addQuestionNode = () => {
-    const pathGenerator = PathIdGenerator.getInstance();
-    const position = getNextPosition();
-    
-    // Generate unique topic for each root question
-    const topic = generateUniqueTopicName();
-    
-    // Generate proper path ID for root question
-    const questionNumber = pathGenerator.getNextQuestionNumber(null, topic);
-    const pathId = pathGenerator.generateQuestionPathId(null, questionNumber, topic);
-    
-    const questionNode: Node = {
-      id: `q-${Date.now()}`,
-      type: 'question',
-      position,
-      data: {
-        pathId,
-        topic,
-        isRoot: true,
-        questionText: 'New Root Question',
-        questionLevel: 1,
-        elementId: 'NEW',
-        subElementId: 'NEW',
-      }
-    };
-    
-    // Register the node in the path generator
-    pathGenerator.registerNode(questionNode.id, pathId);
-    
-    onAddNode?.(questionNode);
-  };
+  // const addQuestionNode = () => {
+  //   const pathGenerator = PathIdGenerator.getInstance();
+  //   const position = getNextPosition();
+  //   
+  //   // Generate unique topic for each root question
+  //   const topic = generateUniqueTopicName();
+  //   
+  //   // Generate proper path ID for root question
+  //   const questionNumber = pathGenerator.getNextQuestionNumber(null, topic);
+  //   const pathId = pathGenerator.generateQuestionPathId(null, questionNumber, topic);
+  //   
+  //   const questionNode: Node = {
+  //     id: `q-${Date.now()}`,
+  //     type: 'question',
+  //     position,
+  //     data: {
+  //       pathId,
+  //       topic,
+  //       isRoot: true,
+  //       questionText: 'New Root Question',
+  //       questionLevel: 1,
+  //       elementId: 'NEW',
+  //       subElementId: 'NEW',
+  //     }
+  //   };
+  //   
+  //   // Register the node in the path generator
+  //   pathGenerator.registerNode(questionNode.id, pathId);
+  //   
+  //   onAddNode?.(questionNode);
+  // };
 
   const addRootQuestionNode = () => {
     const pathGenerator = PathIdGenerator.getInstance();

@@ -646,7 +646,7 @@ export class PathIdGenerator {
   /**
    * Get next available question number for a given parent path
    */
-  getNextQuestionNumber(parentPathId: string | null, topic?: string): number {
+  getNextQuestionNumber(parentPathId: string | null, _topic?: string): number {
     // For root questions, always return 1 (all root questions should be Q1)
     if (parentPathId === null) {
       return 1;
