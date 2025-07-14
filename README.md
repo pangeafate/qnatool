@@ -56,7 +56,10 @@ A React TypeScript application for creating and managing complex questionnaire f
 ### Keyboard Shortcuts
 
 - **Tab**: Create a linked question from the selected node
-- **Delete/Backspace**: Delete the selected node
+- **Shift + Drag**: Multi-select nodes by dragging a selection box
+- **Ctrl/Cmd + C**: Copy selected nodes
+- **Ctrl/Cmd + V**: Paste nodes
+- **Delete/Backspace**: Delete the selected node(s)
 - **Escape**: Deselect all nodes
 
 ### Import/Export

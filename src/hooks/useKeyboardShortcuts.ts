@@ -2,7 +2,7 @@ import { useHotkeys } from 'react-hotkeys-hook';
 import { useFlowStore } from '../stores/flowStore';
 
 export function useKeyboardShortcuts() {
-  const { selectedNodeId, createLinkedQuestion, deleteNode, undo, redo } = useFlowStore();
+  const { selectedNodeId, selectedEdgeId, selectedNodeIds, createLinkedQuestion, deleteNode, deleteEdge, undo, redo, copySelectedNodes, pasteNodes } = useFlowStore();
   
   // Tab to create linked question
   useHotkeys('tab', (e: KeyboardEvent) => {
@@ -19,11 +19,35 @@ export function useKeyboardShortcuts() {
     }
   });
   
-  // Delete key
+  // Delete key - handle both nodes and edges
   useHotkeys('delete, backspace', () => {
-    if (selectedNodeId) {
+    if (selectedEdgeId) {
+      // Delete selected edge
+      deleteEdge(selectedEdgeId);
+    } else if (selectedNodeIds.length > 0) {
+      // Delete all selected nodes
+      selectedNodeIds.forEach(nodeId => deleteNode(nodeId));
+    } else if (selectedNodeId) {
+      // Delete single selected node
       deleteNode(selectedNodeId);
     }
+  });
+  
+  // Copy: Ctrl+C (Windows) / Cmd+C (Mac)
+  useHotkeys('ctrl+c, cmd+c', (e: KeyboardEvent) => {
+    e.preventDefault();
+    console.log('Copy shortcut pressed, selectedNodeIds:', selectedNodeIds);
+    if (selectedNodeIds.length > 0) {
+      copySelectedNodes();
+    }
+  });
+  
+  // Paste: Ctrl+V (Windows) / Cmd+V (Mac)
+  useHotkeys('ctrl+v, cmd+v', (e: KeyboardEvent) => {
+    e.preventDefault();
+    console.log('Paste shortcut pressed');
+    // Paste at a slight offset from the original position
+    pasteNodes({ x: 50, y: 50 });
   });
   
   // Undo: Ctrl+Z (Windows) / Cmd+Z (Mac)
@@ -40,6 +64,9 @@ export function useKeyboardShortcuts() {
   
   // Escape to deselect
   useHotkeys('escape', () => {
-    useFlowStore.getState().setSelectedNodeId(null);
+    const { setSelectedNodeId, setSelectedEdgeId, clearSelection } = useFlowStore.getState();
+    setSelectedNodeId(null);
+    setSelectedEdgeId(null);
+    clearSelection();
   });
 } 

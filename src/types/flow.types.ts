@@ -46,6 +46,7 @@ export interface AnswerVariant {
   inputValidation?: 'number' | 'string' | 'email' | 'date';
   inputPlaceholder?: string;
   nextPathOverride?: string;
+  additionalInfo?: string; // New field for additional information
 }
 
 export interface OutcomeNode {
@@ -139,6 +140,7 @@ export interface QuestionFlowExport {
         score: number;
         allowsInput?: boolean;
         inputValidation?: string;
+        additionalInfo?: string;
       }>;
       
       // For combinations

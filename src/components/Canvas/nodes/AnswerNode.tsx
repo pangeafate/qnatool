@@ -3,6 +3,7 @@ import { Handle, Position, NodeProps } from 'reactflow';
 import { Plus, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { useFlowStore } from '../../../stores/flowStore';
 import { AnswerVariant } from '../../../types/flow.types';
+import { InfoIcon, VariantInfoPopup } from './components';
 
 interface VariantCombination {
   id: string;
@@ -24,6 +25,7 @@ interface AnswerNodeData {
   isParent?: boolean;
   isChild?: boolean;
   isSelected?: boolean;
+  isMultiSelected?: boolean;
   orphanedVariants?: string[];
 }
 
@@ -36,6 +38,18 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
   // Use local state if set, otherwise use global state
   const isPathFolded = localPathFolded !== null ? localPathFolded : pathDisplaysFolded;
   const isCombinationsFolded = localCombinationsFolded !== null ? localCombinationsFolded : combinationSectionsFolded;
+
+  // Info popup state
+  const [infoPopup, setInfoPopup] = useState<{
+    isOpen: boolean;
+    variantId: string | null;
+  }>({ isOpen: false, variantId: null });
+
+  // Auto-resize functionality for textareas
+  const autoResize = (textarea: HTMLTextAreaElement) => {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  };
 
   // Sync answerType with data changes
   useEffect(() => {
@@ -203,6 +217,25 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
       v.id === variantId ? { ...v, ...updates } : v
     );
     updateNode(id, { variants: updatedVariants });
+  };
+
+  // Info popup handlers
+  const openInfoPopup = (variantId: string) => {
+    setInfoPopup({ isOpen: true, variantId });
+  };
+
+  const closeInfoPopup = () => {
+    setInfoPopup({ isOpen: false, variantId: null });
+  };
+
+  const saveVariantInfo = (variantText: string, info: string) => {
+    if (infoPopup.variantId) {
+      updateVariant(infoPopup.variantId, { 
+        text: variantText,
+        additionalInfo: info 
+      });
+    }
+    closeInfoPopup();
   };
 
   const removeVariant = (variantId: string) => {
@@ -412,6 +445,7 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
         ${selected ? 'border-purple-500 shadow-xl ring-2 ring-purple-200' : 'border-gray-200 hover:border-gray-300'}
         ${data.isOrphaned ? 'ring-2 ring-orange-400 border-orange-300' : ''}
         ${data.isParent || data.isChild || data.isSelected ? 'ring-2 ring-green-400 border-green-300' : ''}
+        ${data.isMultiSelected ? 'ring-2 ring-purple-400 border-purple-300 bg-purple-100' : ''}
         transition-all duration-200 hover:shadow-xl cursor-pointer relative
       `}
       onClick={handleClick}
@@ -554,50 +588,75 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
             return (
               <div key={variant.id} className="relative">
                 <div 
-                  className={`flex items-center space-x-2 bg-white rounded-lg p-3 shadow-sm border ${
+                  className={`bg-white rounded-lg p-3 shadow-sm border ${
                     answerType === 'multiple' ? 'border-green-200 hover:border-green-300' : 'border-gray-100'
                   } ${isOrphanedVariant ? 'ring-1 ring-orange-400 border-orange-300' : ''} transition-colors`}
-                                      onClick={stopPropagation}
-                    onMouseDown={stopPropagation}
-                    onDoubleClick={(e) => handleVariantDoubleClick(index, e)}
+                  onClick={stopPropagation}
+                  onMouseDown={stopPropagation}
+                  onDoubleClick={(e) => handleVariantDoubleClick(index, e)}
                 >
-                  <input
-                    type="text"
-                    value={variant.text}
-                    onChange={(e) => updateVariant(variant.id, { text: e.target.value })}
-                    className="flex-1 text-sm bg-transparent focus:outline-none"
-                    placeholder="Answer text..."
-                    onFocus={stopPropagation}
-                    onKeyDown={stopPropagation}
-                  />
-                  <input
-                    type="number"
-                    value={variant.score}
-                    onChange={(e) => updateVariant(variant.id, { score: Number(e.target.value) })}
-                    className="w-12 text-xs text-center bg-gray-50 rounded px-1 py-1 focus:outline-none focus:bg-white border border-gray-200 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
-                    placeholder="0"
-                    title="Score"
-                    min="-999"
-                    max="999"
-                    onFocus={stopPropagation}
-                    onKeyDown={stopPropagation}
-                    onWheel={(e) => {
-                      e.currentTarget.blur(); // Prevent scroll wheel from changing value
-                      e.stopPropagation();
-                    }}
-                    onClick={stopPropagation}
-                    onMouseDown={stopPropagation}
-                  />
-                  {currentVariants.length > 1 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeVariant(variant.id);
+                  {/* Top row: Info icon + Text input + Score + Remove */}
+                  <div className="flex items-start space-x-2">
+                    <InfoIcon
+                      onClick={() => openInfoPopup(variant.id)}
+                      hasInfo={!!variant.additionalInfo}
+                      className="mt-1 flex-shrink-0"
+                    />
+                    <textarea
+                      value={variant.text}
+                      onChange={(e) => {
+                        updateVariant(variant.id, { text: e.target.value });
+                        autoResize(e.target);
                       }}
-                      className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
-                    >
-                      <X size={12} />
-                    </button>
+                      onInput={(e) => autoResize(e.target as HTMLTextAreaElement)}
+                      className="flex-1 text-sm bg-transparent focus:outline-none resize-none min-h-[24px] leading-relaxed"
+                      placeholder="Answer text..."
+                      rows={1}
+                      style={{ 
+                        wordWrap: 'break-word',
+                        wordBreak: 'break-word',
+                        whiteSpace: 'pre-wrap',
+                        overflowWrap: 'break-word'
+                      }}
+                      onFocus={stopPropagation}
+                      onKeyDown={stopPropagation}
+                    />
+                    <input
+                      type="number"
+                      value={variant.score}
+                      onChange={(e) => updateVariant(variant.id, { score: Number(e.target.value) })}
+                      className="w-12 text-xs text-center bg-gray-50 rounded px-1 py-1 focus:outline-none focus:bg-white border border-gray-200 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield] flex-shrink-0"
+                      placeholder="0"
+                      title="Score"
+                      min="-999"
+                      max="999"
+                      onFocus={stopPropagation}
+                      onKeyDown={stopPropagation}
+                      onWheel={(e) => {
+                        e.currentTarget.blur();
+                        e.stopPropagation();
+                      }}
+                      onClick={stopPropagation}
+                      onMouseDown={stopPropagation}
+                    />
+                    {currentVariants.length > 1 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeVariant(variant.id);
+                        }}
+                        className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors flex-shrink-0"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Optional: Preview of additional info if present */}
+                  {variant.additionalInfo && (
+                    <div className="mt-2 text-xs text-gray-500 italic truncate bg-blue-50 px-2 py-1 rounded">
+                      Info: {variant.additionalInfo}
+                    </div>
                   )}
                 </div>
                 
@@ -612,7 +671,7 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
                       top: '50%',
                       right: '-5px',
                       transform: 'translateY(-50%)',
-                      background: isOrphanedVariant ? '#fb923c' : '#22c55e', // Orange for orphaned, green for connected
+                      background: isOrphanedVariant ? '#fb923c' : '#22c55e',
                       width: '10px',
                       height: '10px',
                       zIndex: 10,
@@ -754,6 +813,17 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
             e.stopPropagation();
             createLinkedQuestionNode('default');
           }}
+        />
+      )}
+      
+      {/* Variant Info Popup */}
+      {infoPopup.isOpen && infoPopup.variantId && (
+        <VariantInfoPopup
+          isOpen={infoPopup.isOpen}
+          onClose={closeInfoPopup}
+          onSave={saveVariantInfo}
+          currentInfo={currentVariants.find(v => v.id === infoPopup.variantId)?.additionalInfo || ''}
+          variantText={currentVariants.find(v => v.id === infoPopup.variantId)?.text || ''}
         />
       )}
     </div>

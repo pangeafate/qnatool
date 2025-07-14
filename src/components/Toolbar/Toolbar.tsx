@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Node } from 'reactflow';
-import { Download, Upload, Database, Trash2, Layout, HelpCircle, MessageSquare, Target, Share2, Eye, EyeOff } from 'lucide-react';
+import { Download, Upload, Database, Trash2, Layout, HelpCircle, MessageSquare, Target, Share2, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { PathIdGenerator } from '../../utils/pathIdGenerator';
 import { ExportService } from '../../services/exportService';
 import { useFlowStore } from '../../stores/flowStore';
@@ -18,6 +18,24 @@ interface ToolbarProps {
 export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes = [] }: ToolbarProps) {
   const { setEdges, edges, nodes: storeNodes, setNodes, propagatePathToAll, toggleAllMeta, pathDisplaysFolded, combinationSectionsFolded } = useFlowStore();
   
+  // State for dropdown
+  const [questionDropdownOpen, setQuestionDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as HTMLElement)) {
+        setQuestionDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+  
   // Use store nodes if prop nodes are empty/not provided
   const actualNodes = nodes.length > 0 ? nodes : storeNodes;
   
@@ -27,33 +45,101 @@ export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes =
   const [preImportState, setPreImportState] = useState<{ nodes: Node[], edges: any[] } | null>(null);
 
   const getNextPosition = () => {
-    const existingPositions = actualNodes.map(node => node.position);
+    // Try to get the ReactFlow instance from the global reference
+    const reactFlowInstance = (window as any).reactFlowInstance;
     
-    let x = 200;
-    let y = 200;
+    let centerX = 400; // Default fallback
+    let centerY = 300; // Default fallback
     
-    // Simple grid-based positioning to avoid overlaps
-    const gridSize = 350;
-    const maxCols = 4;
-    
-    for (let i = 0; i < actualNodes.length + 1; i++) {
-      const col = i % maxCols;
-      const row = Math.floor(i / maxCols);
-      
-      x = 200 + col * gridSize;
-      y = 200 + row * gridSize;
-      
-      // Check if this position is far enough from existing nodes
-      const tooClose = existingPositions.some(pos => 
-        Math.abs(pos.x - x) < 250 && Math.abs(pos.y - y) < 200
-      );
-      
-      if (!tooClose) {
-        break;
+    if (reactFlowInstance) {
+      try {
+        // Get the viewport center by converting screen center to flow position
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // Calculate screen center position
+        const screenCenter = {
+          x: viewportWidth / 2,
+          y: viewportHeight / 2
+        };
+        
+        // Convert screen position to flow position
+        const flowCenter = reactFlowInstance.screenToFlowPosition(screenCenter);
+        centerX = flowCenter.x;
+        centerY = flowCenter.y;
+      } catch (error) {
+        console.warn('Failed to get viewport center, using fallback position:', error);
+        // Fall back to default values
       }
     }
     
-    return { x, y };
+    // If no nodes exist, place at center
+    if (actualNodes.length === 0) {
+      return { x: centerX, y: centerY };
+    }
+    
+    // For subsequent nodes, use a small spiral pattern around center to avoid overlaps
+    const existingPositions = actualNodes.map(node => node.position);
+    const offset = 100; // Distance between nodes
+    
+    // Try positions in a spiral pattern around center
+    for (let radius = 0; radius < 500; radius += offset) {
+      for (let angle = 0; angle < 360; angle += 45) {
+        const radians = (angle * Math.PI) / 180;
+        const x = centerX + radius * Math.cos(radians);
+        const y = centerY + radius * Math.sin(radians);
+        
+        // Check if this position is too close to existing nodes
+        const tooClose = existingPositions.some(pos => {
+          const distance = Math.sqrt(Math.pow(pos.x - x, 2) + Math.pow(pos.y - y, 2));
+          return distance < offset;
+        });
+        
+        if (!tooClose) {
+          return { x, y };
+        }
+      }
+    }
+    
+    // If we can't find a good position, just place it at center with some random offset
+    return { 
+      x: centerX + Math.random() * 100 - 50, 
+      y: centerY + Math.random() * 100 - 50 
+    };
+  };
+
+  // Smart topic generation that avoids duplicates
+  const generateUniqueTopicName = (baseName?: string): string => {
+    // Get the most up-to-date nodes from the store
+    const { nodes: currentNodes } = useFlowStore.getState();
+    const existingTopics = currentNodes
+      .filter(node => node.data?.isRoot)
+      .map(node => node.data.topic)
+      .filter(topic => topic); // Filter out undefined/null topics
+
+    // If no base name provided, use TOPIC-X format
+    if (!baseName) {
+      let counter = 1;
+      let candidateTopic = `TOPIC-${counter}`;
+      
+      while (existingTopics.includes(candidateTopic)) {
+        counter++;
+        candidateTopic = `TOPIC-${counter}`;
+      }
+      
+      return candidateTopic;
+    }
+
+    // If base name provided, ensure it's unique
+    let candidateTopic = baseName;
+    let counter = 1;
+    
+    while (existingTopics.includes(candidateTopic)) {
+      counter++;
+      candidateTopic = `${baseName}-${counter}`;
+    }
+    
+    return candidateTopic;
   };
 
   const addQuestionNode = () => {
@@ -61,9 +147,7 @@ export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes =
     const position = getNextPosition();
     
     // Generate unique topic for each root question
-    const existingRootNodes = actualNodes.filter(node => node.data?.isRoot);
-    const topicNumber = existingRootNodes.length + 1;
-    const topic = `TOPIC-${topicNumber}`;
+    const topic = generateUniqueTopicName();
     
     // Generate proper path ID for root question
     const questionNumber = pathGenerator.getNextQuestionNumber(null, topic);
@@ -77,7 +161,7 @@ export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes =
         pathId,
         topic,
         isRoot: true,
-        questionText: 'New Question',
+        questionText: 'New Root Question',
         questionLevel: 1,
         elementId: 'NEW',
         subElementId: 'NEW',
@@ -88,6 +172,68 @@ export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes =
     pathGenerator.registerNode(questionNode.id, pathId);
     
     onAddNode?.(questionNode);
+  };
+
+  const addRootQuestionNode = () => {
+    const pathGenerator = PathIdGenerator.getInstance();
+    const position = getNextPosition();
+    
+    // Generate unique topic for each root question
+    const topic = generateUniqueTopicName();
+    
+    // Generate proper path ID for root question
+    const questionNumber = pathGenerator.getNextQuestionNumber(null, topic);
+    const pathId = pathGenerator.generateQuestionPathId(null, questionNumber, topic);
+    
+    const questionNode: Node = {
+      id: `q-${Date.now()}`,
+      type: 'question',
+      position,
+      data: {
+        pathId,
+        topic,
+        isRoot: true,
+        questionText: 'New Root Question',
+        questionLevel: 1,
+        elementId: 'NEW',
+        subElementId: 'NEW',
+      }
+    };
+    
+    // Register the node in the path generator
+    pathGenerator.registerNode(questionNode.id, pathId);
+    
+    onAddNode?.(questionNode);
+    setQuestionDropdownOpen(false);
+  };
+
+  const addRegularQuestionNode = () => {
+    const pathGenerator = PathIdGenerator.getInstance();
+    const position = getNextPosition();
+    
+    // For regular questions, create a standalone question without root properties
+    const pathId = `STANDALONE-Q${Date.now()}`;
+    
+    const questionNode: Node = {
+      id: `q-${Date.now()}`,
+      type: 'question',
+      position,
+      data: {
+        pathId,
+        topic: 'STANDALONE',
+        isRoot: false,
+        questionText: 'New Regular Question',
+        questionLevel: 1,
+        elementId: 'NEW',
+        subElementId: 'NEW',
+      }
+    };
+    
+    // Register the node in the path generator
+    pathGenerator.registerNode(questionNode.id, pathId);
+    
+    onAddNode?.(questionNode);
+    setQuestionDropdownOpen(false);
   };
 
   const addAnswerNode = () => {
@@ -455,13 +601,33 @@ export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes =
       
       {/* Group 2: Add nodes - greenish colors */}
       <div className="flex items-center gap-1">
-        <button
-          onClick={addQuestionNode}
-          className="flex items-center justify-center space-x-2 px-4 py-2 bg-emerald-400 text-white rounded-lg hover:bg-emerald-500 transition-colors text-sm font-medium w-[140px] h-10"
-        >
-          <HelpCircle size={16} />
-          <span>Add Question</span>
-        </button>
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setQuestionDropdownOpen(!questionDropdownOpen)}
+            className="flex items-center justify-center space-x-2 px-4 py-2 bg-emerald-400 text-white rounded-lg hover:bg-emerald-500 transition-colors text-sm font-medium w-[140px] h-10"
+          >
+            <HelpCircle size={16} />
+            <span>Add Question</span>
+            <ChevronDown size={14} />
+          </button>
+          
+          {questionDropdownOpen && (
+            <div className="absolute top-full left-0 mt-1 w-[140px] bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+              <button
+                onClick={addRootQuestionNode}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg"
+              >
+                ROOT
+              </button>
+              <button
+                onClick={addRegularQuestionNode}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg"
+              >
+                REGULAR
+              </button>
+            </div>
+          )}
+        </div>
         <button
           onClick={addAnswerNode}
           className="flex items-center justify-center space-x-2 px-4 py-2 bg-emerald-400 text-white rounded-lg hover:bg-emerald-500 transition-colors text-sm font-medium w-[140px] h-10"

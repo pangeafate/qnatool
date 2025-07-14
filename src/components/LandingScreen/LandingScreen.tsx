@@ -674,6 +674,18 @@ export function LandingScreen({ onEnterApp }: LandingScreenProps) {
                 <kbd className="px-2 py-1 bg-gray-200 rounded text-sm">Tab</kbd>
               </div>
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-700">Multi-select nodes</span>
+                <kbd className="px-2 py-1 bg-gray-200 rounded text-sm">Shift + Drag</kbd>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-700">Copy selected nodes</span>
+                <kbd className="px-2 py-1 bg-gray-200 rounded text-sm">Ctrl/⌘ + C</kbd>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-700">Paste nodes</span>
+                <kbd className="px-2 py-1 bg-gray-200 rounded text-sm">Ctrl/⌘ + V</kbd>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <span className="text-gray-700">Delete selected node</span>
                 <kbd className="px-2 py-1 bg-gray-200 rounded text-sm">Delete</kbd>
               </div>

@@ -215,10 +215,10 @@ export class PathIdGenerator {
       incomingEdgeMap.set(edge.target, targetEdges);
     });
 
-    // Find root question nodes (no incoming edges)
+    // Find root question nodes (explicitly marked as root)
     const rootNodes = nodes.filter(node => 
       node.type === 'question' && 
-      !edges.some(edge => edge.target === node.id)
+      node.data?.isRoot === true
     );
 
     // Reset counters to start fresh
@@ -234,7 +234,8 @@ export class PathIdGenerator {
         data: {
           ...node.data,
           pathIds: [],
-          topic: newTopic,
+          // Preserve original topic for ALL nodes - don't override with newTopic
+          topic: node.data?.topic || newTopic,
         }
       });
     });
@@ -248,13 +249,19 @@ export class PathIdGenerator {
       sourceNodeId?: string;
     }> = [];
 
-    // Start with root nodes
+    // Start with root nodes that have outgoing connections
     rootNodes.forEach(rootNode => {
-      queue.push({
-        nodeId: rootNode.id,
-        parentPathId: null,
-        level: 1,
-      });
+      // Only process root nodes that have outgoing connections
+      const hasOutgoingConnections = outgoingEdgeMap.has(rootNode.id) && 
+        (outgoingEdgeMap.get(rootNode.id)?.length || 0) > 0;
+      
+      if (hasOutgoingConnections) {
+        queue.push({
+          nodeId: rootNode.id,
+          parentPathId: null,
+          level: 1,
+        });
+      }
     });
 
     // Track processed path combinations to avoid infinite loops
@@ -272,7 +279,9 @@ export class PathIdGenerator {
       if (node.type === 'question') {
         const questionNumber = this.getQuestionNumberForNode(node.id, parentPathId, nodes);
         if (parentPathId === null) {
-          pathId = `${newTopic}-Q${questionNumber}`;
+          // For root questions, use their updated topic from the node data
+          const rootTopic = node.data?.topic || newTopic;
+          pathId = `${rootTopic}-Q${questionNumber}`;
         } else {
           pathId = `${parentPathId}-Q${questionNumber}`;
         }
@@ -480,8 +489,10 @@ export class PathIdGenerator {
             pathId: shouldUpdatePrimary ? pathId : (currentNode.data.pathId || pathId),
             primaryPathId: shouldUpdatePrimary ? pathId : (primaryPathId || pathId),
             pathIds: updatedPathIds,
-            isRoot: parentPathId === null && node.type === 'question',
+            isRoot: currentNode.data.isRoot || false, // Preserve original isRoot value
             questionLevel: level,
+            // Preserve original topic for root nodes
+            topic: (currentNode.data.isRoot && currentNode.data.topic) ? currentNode.data.topic : currentNode.data.topic,
           }
         });
       }
@@ -513,27 +524,35 @@ export class PathIdGenerator {
     }
 
     // Process any orphaned nodes (not connected to any root)
+    // But also check if nodes are truly connected by verifying they can trace back to root
     nodes.forEach(node => {
       const updatedNode = updatedNodeMap.get(node.id);
+      
+      // Skip root nodes themselves
+      if (node.data?.isRoot === true) {
+        return;
+      }
+      
+      let shouldMarkAsDisconnected = false;
+      
       if (updatedNode && (!updatedNode.data.pathIds || updatedNode.data.pathIds.length === 0)) {
-        // For answer nodes with no paths, check if they should have paths
-        if (node.type === 'answer' && (node.data?.answerType === 'multiple' || node.data?.answerType === 'combinations')) {
-          // These answer types don't store direct paths, so skip
-          return;
-        }
-        
+        // Node has no paths at all
+        shouldMarkAsDisconnected = true;
+      }
+      
+      if (shouldMarkAsDisconnected) {
         let pathId: string;
         if (node.type === 'question') {
-          const questionNumber = this.getQuestionNumberForNode(node.id, 'ORPHAN', nodes);
-          pathId = `ORPHAN-Q${questionNumber}`;
+          const questionNumber = this.getQuestionNumberForNode(node.id, 'disconnected from root', nodes);
+          pathId = `disconnected from root-Q${questionNumber}`;
         } else if (node.type === 'answer') {
-          const answerNumber = this.getAnswerNumberForNode(node.id, 'ORPHAN', nodes);
-          pathId = `ORPHAN-A${answerNumber}`;
+          const answerNumber = this.getAnswerNumberForNode(node.id, 'disconnected from root', nodes);
+          pathId = `disconnected from root-A${answerNumber}`;
         } else if (node.type === 'outcome') {
-          const outcomeNumber = this.getOutcomeNumberForNode(node.id, 'ORPHAN', nodes);
-          pathId = `ORPHAN-E${outcomeNumber}`;
+          const outcomeNumber = this.getOutcomeNumberForNode(node.id, 'disconnected from root', nodes);
+          pathId = `disconnected from root-E${outcomeNumber}`;
         } else {
-          pathId = `ORPHAN-NODE`;
+          pathId = `disconnected from root-NODE`;
         }
 
         const pathKey = `${node.id}:${pathId}`;
@@ -550,6 +569,8 @@ export class PathIdGenerator {
               pathIds: [pathId],
               isRoot: false,
               questionLevel: 1,
+              // Preserve original topic
+              topic: currentNode.data.topic,
             }
           });
 
@@ -566,18 +587,28 @@ export class PathIdGenerator {
 
   /**
    * Get sequential question number based on all questions in the flow
-   * Each question gets a unique number: Q1, Q2, Q3, etc.
+   * Root questions always get Q1, child questions get sequential numbers
    */
-  getQuestionNumberForNode(nodeId: string, _parentPathId: string | null, nodes: Node[]): number {
-    // Get all question nodes from the flow
-    const questionNodes = nodes.filter((node: Node) => node.type === 'question');
+  getQuestionNumberForNode(nodeId: string, parentPathId: string | null, nodes: Node[]): number {
+    // Find the node to check if it's a root question
+    const currentNode = nodes.find((node: Node) => node.id === nodeId);
+    
+    // If it's a root question (no parent path or explicitly marked as root), always return 1
+    if (parentPathId === null || currentNode?.data?.isRoot === true) {
+      return 1;
+    }
+    
+    // For child questions, get sequential numbering based on all non-root questions
+    const childQuestionNodes = nodes.filter((node: Node) => 
+      node.type === 'question' && !node.data?.isRoot
+    );
     
     // Find the index of this node in the sorted list (by node ID for consistency)
-    const sortedQuestionNodes = questionNodes.sort((a: Node, b: Node) => a.id.localeCompare(b.id));
-    const nodeIndex = sortedQuestionNodes.findIndex((node: Node) => node.id === nodeId);
+    const sortedChildQuestionNodes = childQuestionNodes.sort((a: Node, b: Node) => a.id.localeCompare(b.id));
+    const nodeIndex = sortedChildQuestionNodes.findIndex((node: Node) => node.id === nodeId);
     
-    // Return 1-based index
-    return nodeIndex + 1;
+    // Return 1-based index, starting from 2 for child questions
+    return nodeIndex + 2;
   }
 
   /**
@@ -613,16 +644,12 @@ export class PathIdGenerator {
   }
 
   /**
-   * Get next available question number - for compatibility with existing code
-   * This method is used by Toolbar and other components
+   * Get next available question number for a given parent path
    */
   getNextQuestionNumber(parentPathId: string | null, topic?: string): number {
-    // For root questions, use topic-specific counter
-    if (parentPathId === null && topic) {
-      const key = `Q-${topic}`;
-      const current = this.counters.get(key) || 0;
-      this.counters.set(key, current + 1);
-      return current + 1;
+    // For root questions, always return 1 (all root questions should be Q1)
+    if (parentPathId === null) {
+      return 1;
     }
     
     // For child questions, use a simple counter for backward compatibility

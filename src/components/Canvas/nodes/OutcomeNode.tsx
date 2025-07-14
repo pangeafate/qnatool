@@ -12,6 +12,7 @@ interface OutcomeNodeData {
   isParent?: boolean;
   isChild?: boolean;
   isSelected?: boolean;
+  isMultiSelected?: boolean;
 }
 
 export default function OutcomeNode({ id, data, selected }: NodeProps<OutcomeNodeData>) {
@@ -41,6 +42,7 @@ export default function OutcomeNode({ id, data, selected }: NodeProps<OutcomeNod
         ${selected ? 'border-green-500 shadow-xl ring-2 ring-green-200' : 'border-gray-200 hover:border-gray-300'}
         ${data.isOrphaned ? 'ring-2 ring-orange-400 border-orange-300' : ''}
         ${data.isParent || data.isChild || data.isSelected ? 'ring-2 ring-green-400 border-green-300' : ''}
+        ${data.isMultiSelected ? 'ring-2 ring-purple-400 border-purple-300 bg-purple-50' : ''}
         transition-all duration-200 hover:shadow-xl cursor-pointer
       `}
       onClick={handleClick}

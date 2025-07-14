@@ -17,14 +17,58 @@ interface QuestionNodeData {
   isParent?: boolean;
   isChild?: boolean;
   isSelected?: boolean;
+  isMultiSelected?: boolean;
 }
 
 export default function QuestionNode({ id, data, selected }: NodeProps<QuestionNodeData>) {
-  const { setSelectedNodeId, updateNode, recalculateFlowIds, propagateTopicOnConnection, propagatePathIdOnConnection, focusOnNode, edges, pathDisplaysFolded } = useFlowStore();
+  const { setSelectedNodeId, updateNode, recalculateFlowIds, propagateTopicOnConnection, propagatePathIdOnConnection, focusOnNode, edges, pathDisplaysFolded, nodes } = useFlowStore();
   const [localPathFolded, setLocalPathFolded] = useState<boolean | null>(null);
+  const [topicError, setTopicError] = useState<string | null>(null);
 
   // Use local state if set, otherwise use global state
   const isPathFolded = localPathFolded !== null ? localPathFolded : pathDisplaysFolded;
+
+  // Validate topic uniqueness
+  const validateTopicUniqueness = (newTopic: string): boolean => {
+    if (!newTopic.trim()) return false;
+    
+    // Check if any other root question has this topic
+    const otherRootNodes = nodes.filter(node => 
+      node.data?.isRoot && 
+      node.id !== id && 
+      node.data.topic === newTopic.trim()
+    );
+    
+    return otherRootNodes.length === 0;
+  };
+
+  // Generate alternative topic suggestions
+  const generateTopicSuggestions = (baseTopic: string): string[] => {
+    const suggestions: string[] = [];
+    const existingTopics = nodes
+      .filter(node => node.data?.isRoot && node.id !== id)
+      .map(node => node.data.topic)
+      .filter(topic => topic);
+
+    // Generate numbered alternatives
+    for (let i = 1; i <= 5; i++) {
+      const suggestion = `${baseTopic}-${i}`;
+      if (!existingTopics.includes(suggestion)) {
+        suggestions.push(suggestion);
+      }
+    }
+
+    // Generate some creative alternatives
+    const prefixes = ['NEW', 'ALT', 'BRANCH', 'FLOW', 'PATH'];
+    prefixes.forEach(prefix => {
+      const suggestion = `${prefix}-${baseTopic}`;
+      if (!existingTopics.includes(suggestion) && suggestions.length < 8) {
+        suggestions.push(suggestion);
+      }
+    });
+
+    return suggestions.slice(0, 5); // Return max 5 suggestions
+  };
 
   const handleClick = () => {
     setSelectedNodeId(id);
@@ -50,11 +94,57 @@ export default function QuestionNode({ id, data, selected }: NodeProps<QuestionN
 
   const handleTopicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newTopic = e.target.value;
+    
+    // Clear previous error
+    setTopicError(null);
+    
+    // Always update the display value immediately for smooth UX
     updateNode(id, { topic: newTopic });
     
-    // If this is a root node, recalculate all path IDs
-    if (data.isRoot) {
+    // If this is a root node, validate uniqueness
+    if (data.isRoot && newTopic.trim()) {
+      if (!validateTopicUniqueness(newTopic)) {
+        setTopicError(`Topic "${newTopic}" already exists. Please choose a different name.`);
+        return; // Don't recalculate path IDs for duplicate topics
+      }
+    }
+    
+    // If this is a root node and topic is valid, recalculate all path IDs
+    if (data.isRoot && newTopic.trim()) {
       recalculateFlowIds(id, newTopic);
+    }
+  };
+
+  const handleTopicBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const newTopic = e.target.value.trim();
+    
+    // If topic is empty, generate a unique one
+    if (!newTopic && data.isRoot) {
+      const existingTopics = nodes
+        .filter(node => node.data?.isRoot && node.id !== id)
+        .map(node => node.data.topic)
+        .filter(topic => topic);
+      
+      let counter = 1;
+      let uniqueTopic = `TOPIC-${counter}`;
+      
+      while (existingTopics.includes(uniqueTopic)) {
+        counter++;
+        uniqueTopic = `TOPIC-${counter}`;
+      }
+      
+      updateNode(id, { topic: uniqueTopic });
+      recalculateFlowIds(id, uniqueTopic);
+      setTopicError(null);
+    }
+  };
+
+  const applySuggestedTopic = (suggestedTopic: string) => {
+    updateNode(id, { topic: suggestedTopic });
+    setTopicError(null);
+    
+    if (data.isRoot) {
+      recalculateFlowIds(id, suggestedTopic);
     }
   };
 
@@ -64,6 +154,12 @@ export default function QuestionNode({ id, data, selected }: NodeProps<QuestionN
   };
 
   const createLinkedAnswerNode = () => {
+    // If this is a root node with a topic error, prevent connection
+    if (data.isRoot && topicError) {
+      console.log('Cannot create connection: Topic validation failed. Please fix the topic first.');
+      return;
+    }
+    
     const { nodes, addNode, addEdge, edges } = useFlowStore.getState();
     
     // Check if this question already has an outgoing connection (enforce connection restrictions)
@@ -136,18 +232,21 @@ export default function QuestionNode({ id, data, selected }: NodeProps<QuestionN
         ${selected ? 'border-blue-500 shadow-xl ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300'}
         ${data.isOrphaned ? 'ring-2 ring-orange-400 border-orange-300' : ''}
         ${data.isParent || data.isChild || data.isSelected ? 'ring-2 ring-green-400 border-green-300' : ''}
+        ${data.isMultiSelected ? 'ring-2 ring-purple-400 border-purple-300 bg-purple-50' : ''}
         transition-all duration-200 hover:shadow-xl cursor-pointer
       `}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
     >
-      {/* Input Handle (top) - Gray entry dot */}
-      <Handle
-        type="target"
-        position={Position.Top}
-        className="w-3 h-3 bg-gray-400 border-2 border-white"
-        style={{ background: '#9ca3af' }}
-      />
+      {/* Input Handle (top) - Gray entry dot - Only for non-root questions */}
+      {!data.isRoot && (
+        <Handle
+          type="target"
+          position={Position.Top}
+          className="w-3 h-3 bg-gray-400 border-2 border-white"
+          style={{ background: '#9ca3af' }}
+        />
+      )}
       
       <div className="space-y-3">
         {/* Header */}
@@ -212,11 +311,41 @@ export default function QuestionNode({ id, data, selected }: NodeProps<QuestionN
                 type="text"
                 value={data.topic || ''}
                 onChange={handleTopicChange}
-                className="w-full p-2 border border-gray-200 rounded text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onBlur={handleTopicBlur}
+                className={`w-full p-2 border rounded text-sm font-semibold focus:outline-none focus:ring-2 focus:border-transparent ${
+                  topicError 
+                    ? 'border-red-300 focus:ring-red-500' 
+                    : 'border-gray-200 focus:ring-blue-500'
+                }`}
                 placeholder="Enter topic..."
                 onFocus={stopPropagation}
                 onKeyDown={stopPropagation}
               />
+              
+              {/* Error message and suggestions */}
+              {topicError && (
+                <div className="mt-1 space-y-2">
+                  <p className="text-xs text-red-600">{topicError}</p>
+                  
+                  {/* Topic suggestions */}
+                  {data.topic && (
+                    <div className="space-y-1">
+                      <p className="text-xs text-gray-500">Suggestions:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {generateTopicSuggestions(data.topic).map((suggestion, index) => (
+                          <button
+                            key={index}
+                            onClick={() => applySuggestedTopic(suggestion)}
+                            className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}

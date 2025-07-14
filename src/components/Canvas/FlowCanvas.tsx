@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
   Controls,
   Background,
@@ -50,13 +50,62 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
     propagateTopicOnConnection,
     propagatePathIdOnConnection,
     selectedNodeId,
+    selectedEdgeId,
+    selectedNodeIds,
+    setSelectedEdgeId,
+    setSelectedNodeIds,
+    addToSelection,
+    removeFromSelection,
+    clearSelection,
     setNodes,
+    setEdges: storeSetEdges,
     focusNodeId,
     clearFocusNode
   } = useFlowStore();
   const [nodesState, setNodesLocal, onNodesChange] = useNodesState(nodes);
-  const [edgesState, setEdgesLocal, onEdgesChange] = useEdgesState(edges);
+  const [edgesState, setEdgesStateLocal, onEdgesChange] = useEdgesState(edges);
   const reactFlowInstance = useReactFlow();
+  
+  // Selection box state
+  const [selectionBox, setSelectionBox] = useState<{
+    startX: number;
+    startY: number;
+    endX: number;
+    endY: number;
+    isSelecting: boolean;
+  } | null>(null);
+
+  // Track if shift key is pressed for cursor feedback
+  const [isShiftPressed, setIsShiftPressed] = useState(false);
+
+  // Listen for keyboard events to track shift key
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Shift') {
+        console.log('Shift key pressed - entering selection mode');
+        setIsShiftPressed(true);
+      }
+    };
+
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.key === 'Shift') {
+        console.log('Shift key released - exiting selection mode');
+        setIsShiftPressed(false);
+        // If we were selecting and shift is released, cancel selection
+        if (selectionBox?.isSelecting) {
+          setSelectionBox(null);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [selectionBox?.isSelecting]);
   
   // Add a ref to track if we're doing a bulk position update (like organize)
   const isBulkUpdate = React.useRef(false);
@@ -226,15 +275,16 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
             isParent: parents.includes(storeNode.id),
             isChild: children.includes(storeNode.id),
             isSelected: selectedNodeId === storeNode.id,
+            isMultiSelected: selectedNodeIds.includes(storeNode.id),
             orphanedVariants: orphanedVariants.get(storeNode.id) || []
           }
         };
       });
     });
-  }, [nodes, edges, setNodesLocal, selectedNodeId]);
+  }, [nodes, edges, setNodesLocal, selectedNodeId, selectedNodeIds]);
 
   React.useEffect(() => {
-    // Apply edge styling based on selected node
+    // Apply edge styling based on selected node and selected edge
     const styledEdges = edges.map(edge => {
       let edgeColor = '#9ca3af'; // Default light grey
       let edgeStyle: any = {
@@ -242,8 +292,18 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
         strokeWidth: 2
       };
       
+      // If this specific edge is selected, make it red with red halo
+      if (selectedEdgeId === edge.id) {
+        edgeColor = '#dc2626'; // Red color for selected edge
+        edgeStyle = {
+          stroke: edgeColor,
+          strokeWidth: 3,
+          filter: 'drop-shadow(0 0 16px #dc2626cc)', // Red glow/halo effect
+          opacity: 1
+        };
+      }
       // If a node is selected, color edges connected to it blue with glow effect
-      if (selectedNodeId && (edge.source === selectedNodeId || edge.target === selectedNodeId)) {
+      else if (selectedNodeId && (edge.source === selectedNodeId || edge.target === selectedNodeId)) {
         edgeColor = '#2563eb'; // Bright blue for connected edges
         edgeStyle = {
           stroke: edgeColor,
@@ -262,8 +322,8 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
       };
     });
     
-    setEdgesLocal(styledEdges);
-  }, [edges, setEdgesLocal, selectedNodeId]);
+    setEdgesStateLocal(styledEdges);
+  }, [edges, setEdgesStateLocal, selectedNodeId, selectedEdgeId]);
 
   const onConnect = useCallback((params: Connection) => {
     if (!params.source || !params.target) return;
@@ -291,6 +351,20 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
     if (sourceNode.type === 'question' && targetNode.type !== 'answer') {
       console.log('Question nodes can only connect to Answer nodes');
       return;
+    }
+    
+    // Topic validation: Check if source is a root question with duplicate topic
+    if (sourceNode.type === 'question' && sourceNode.data?.isRoot) {
+      const otherRootNodes = nodes.filter(node => 
+        node.data?.isRoot && 
+        node.id !== sourceNode.id && 
+        node.data.topic === sourceNode.data.topic
+      );
+      
+      if (otherRootNodes.length > 0) {
+        console.log(`Cannot create connection: Topic "${sourceNode.data.topic}" already exists on another root question. Please choose a different topic.`);
+        return;
+      }
     }
     
     // Rule 2: Each answer variant can only have one outgoing connection
@@ -382,10 +456,91 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     useFlowStore.getState().setSelectedNodeId(node.id);
   }, []);
+  
+  const onEdgeClick = useCallback((_event: React.MouseEvent, edge: Edge) => {
+    setSelectedEdgeId(edge.id);
+  }, [setSelectedEdgeId]);
 
   const onPaneClick = useCallback(() => {
     useFlowStore.getState().setSelectedNodeId(null);
-  }, []);
+    setSelectedEdgeId(null);
+    clearSelection();
+  }, [setSelectedEdgeId, clearSelection]);
+
+  // Selection box mouse handlers
+  const onMouseDown = useCallback((event: React.MouseEvent) => {
+    // Only start selection if clicking on the pane (not on nodes) AND holding Shift key
+    if (event.target === event.currentTarget && isShiftPressed) {
+      console.log('Starting selection box - Shift is pressed');
+      event.preventDefault(); // Prevent default panning behavior
+      event.stopPropagation(); // Stop event bubbling
+      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      setSelectionBox({
+        startX: event.clientX - rect.left,
+        startY: event.clientY - rect.top,
+        endX: event.clientX - rect.left,
+        endY: event.clientY - rect.top,
+        isSelecting: true,
+      });
+    }
+  }, [isShiftPressed]);
+
+  const onMouseMove = useCallback((event: React.MouseEvent) => {
+    if (selectionBox?.isSelecting) {
+      event.preventDefault(); // Prevent default behavior during selection
+      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      setSelectionBox(prev => prev ? {
+        ...prev,
+        endX: event.clientX - rect.left,
+        endY: event.clientY - rect.top,
+      } : null);
+    }
+  }, [selectionBox]);
+
+  const onMouseUp = useCallback(() => {
+    if (selectionBox?.isSelecting && reactFlowInstance) {
+      console.log('Finishing selection box');
+      // Calculate selection box bounds
+      const minX = Math.min(selectionBox.startX, selectionBox.endX);
+      const maxX = Math.max(selectionBox.startX, selectionBox.endX);
+      const minY = Math.min(selectionBox.startY, selectionBox.endY);
+      const maxY = Math.max(selectionBox.startY, selectionBox.endY);
+
+      // Only select if the box has meaningful size (avoid accidental selections)
+      const boxWidth = maxX - minX;
+      const boxHeight = maxY - minY;
+      
+      console.log(`Selection box size: ${boxWidth}x${boxHeight}`);
+      
+      if (boxWidth > 10 && boxHeight > 10) {
+        // Convert screen coordinates to flow coordinates
+        const startFlow = reactFlowInstance.screenToFlowPosition({ x: minX, y: minY });
+        const endFlow = reactFlowInstance.screenToFlowPosition({ x: maxX, y: maxY });
+
+        // Find nodes within selection box
+        const selectedNodes = nodesState.filter(node => {
+          const nodeX = node.position.x;
+          const nodeY = node.position.y;
+          const nodeWidth = 280; // Approximate node width
+          const nodeHeight = 150; // Approximate node height
+          
+          // Check if node overlaps with selection box
+          return (
+            nodeX < endFlow.x && 
+            nodeX + nodeWidth > startFlow.x &&
+            nodeY < endFlow.y && 
+            nodeY + nodeHeight > startFlow.y
+          );
+        });
+
+        console.log(`Selected ${selectedNodes.length} nodes:`, selectedNodes.map(n => n.id));
+        // Update selection
+        setSelectedNodeIds(selectedNodes.map(node => node.id));
+      }
+    }
+    
+    setSelectionBox(null);
+  }, [selectionBox, reactFlowInstance, nodesState, setSelectedNodeIds]);
 
   // Handle node changes - update positions in store when dragged
   const handleNodesChange = useCallback((changes: any) => {
@@ -419,6 +574,19 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
   }, [onEdgesChange, storeDeleteEdge]);
 
   // Remove the useImperativeHandle since we're using window instead
+
+  // Store the ReactFlow instance globally for the toolbar to access
+  React.useEffect(() => {
+    if (reactFlowInstance) {
+      (window as any).reactFlowInstance = reactFlowInstance;
+    }
+    
+    return () => {
+      if ((window as any).reactFlowInstance === reactFlowInstance) {
+        delete (window as any).reactFlowInstance;
+      }
+    };
+  }, [reactFlowInstance]);
 
   // Store the setBulkUpdate function in window for the toolbar to access
   React.useEffect(() => {
@@ -616,7 +784,7 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
   }, [reactFlowInstance]);
 
   return (
-    <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className={`w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 ${isShiftPressed ? 'cursor-crosshair' : ''}`}>
       <ReactFlow
         nodes={nodesState}
         edges={edgesState}
@@ -625,15 +793,19 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
         onConnect={onConnect}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
+        onEdgeClick={onEdgeClick}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
         nodeTypes={nodeTypes}
         connectionMode={ConnectionMode.Loose}
         defaultEdgeOptions={defaultEdgeOptions}
-        className="bg-transparent"
-        nodesDraggable={true}
+        className={`bg-transparent ${isShiftPressed ? 'cursor-crosshair' : ''}`}
+        nodesDraggable={!isShiftPressed}
         nodesConnectable={true}
         elementsSelectable={true}
         selectNodesOnDrag={false}
-        panOnDrag={true}
+        panOnDrag={!isShiftPressed}
         panOnScroll={true}
         panOnScrollSpeed={0.5}
         zoomOnScroll={true}
@@ -641,6 +813,9 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
         zoomOnDoubleClick={false}
         preventScrolling={false}
         panActivationKeyCode={null}
+        multiSelectionKeyCode={null}
+        selectionKeyCode={null}
+        deleteKeyCode={null}
       >
         <Background 
           variant={BackgroundVariant.Dots}
@@ -666,32 +841,47 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
           onClick={onMinimapClick}
         />
         
-        {/* Custom Panel for Stats */}
-        <Panel position="top-right" className="bg-white/95 backdrop-blur shadow-lg rounded-lg p-4 m-4 border border-gray-200">
-          <div className="text-sm space-y-1">
-            <div className="font-semibold text-gray-700 mb-2">Flow Stats</div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span>Questions: {nodesState.filter(n => n.type === 'question').length}</span>
+        {/* Flow Stats Panel */}
+        <Panel position="top-right" className="bg-white p-3 rounded-lg shadow-lg">
+          <div className="text-sm font-semibold text-gray-700 mb-2">Flow Stats</div>
+          <div className="space-y-1 text-xs">
+            <div className="flex items-center">
+              <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+              <span>Questions: {nodesState.filter(node => node.type === 'question').length}</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-              <span>Answers: {nodesState.filter(n => n.type === 'answer').length}</span>
+            <div className="flex items-center">
+              <div className="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
+              <span>Answers: {nodesState.filter(node => node.type === 'answer').length}</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span>Outcomes: {nodesState.filter(n => n.type === 'outcome').length}</span>
+            <div className="flex items-center">
+              <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+              <span>Outcomes: {nodesState.filter(node => node.type === 'outcome').length}</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+            <div className="flex items-center">
+              <div className="w-2 h-2 bg-gray-500 rounded-full mr-2"></div>
               <span>Connections: {edgesState.length}</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-              <span>Orphaned: {nodesState.filter(n => n.data?.isOrphaned).length}</span>
+            <div className="flex items-center">
+              <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
+              <span>Orphaned: {nodesState.filter(node => !edgesState.some(edge => edge.source === node.id || edge.target === node.id)).length}</span>
             </div>
           </div>
         </Panel>
+        
+
+        
+        {/* Selection Box */}
+        {selectionBox?.isSelecting && (
+          <div
+            className="absolute pointer-events-none border-2 border-blue-500 bg-blue-200 bg-opacity-20 z-10"
+            style={{
+              left: Math.min(selectionBox.startX, selectionBox.endX),
+              top: Math.min(selectionBox.startY, selectionBox.endY),
+              width: Math.abs(selectionBox.endX - selectionBox.startX),
+              height: Math.abs(selectionBox.endY - selectionBox.startY),
+            }}
+          />
+        )}
       </ReactFlow>
     </div>
   );

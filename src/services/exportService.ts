@@ -48,9 +48,10 @@ export class ExportService {
     const answerNodes = nodes.filter(n => n.type === 'answer');
     const outcomeNodes = nodes.filter(n => n.type === 'outcome');
     
-    // Get root topic from first root question
-    const rootQuestion = questionNodes.find(n => n.data.isRoot);
-    const topic = rootQuestion?.data.topic || 'UNTITLED';
+    // Get all root questions and their topics
+    const rootQuestions = questionNodes.filter(n => n.data.isRoot);
+    const topics = rootQuestions.map(n => n.data.topic).filter(Boolean);
+    const topic = topics.length > 1 ? `Multi-Topic (${topics.join(', ')})` : (topics[0] || 'UNTITLED');
     
     // Build metadata
     const metadata = {
@@ -95,6 +96,7 @@ export class ExportService {
           score: v.score,
           allowsInput: v.allowsInput,
           inputValidation: v.inputValidation,
+          additionalInfo: v.additionalInfo,
         })),
         // Include combination data for proper reconstruction
         combinations: node.data.answerType === 'combinations' ? this.generateCombinationsForNode(node.data.variants || []) : undefined,
