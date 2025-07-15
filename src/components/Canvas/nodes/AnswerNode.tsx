@@ -895,8 +895,6 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
               
               {/* CRITICAL FIX: Render invisible handles when folded to keep connections visible */}
               {isCombinationsFolded && getCurrentCombinations().map((combination) => {
-                const isOrphanedCombination = getOrphanedCombinations().some(c => c.id === combination.id);
-                
                 return (
                   <Handle
                     key={`folded-handle-${combination.id}`}
