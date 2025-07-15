@@ -406,13 +406,6 @@ export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes =
       private grid: Set<string> = new Set();
       private cellSize: number = 50; // 50px grid cells for precise collision detection
       
-      // Convert position to grid key
-      private getGridKey(x: number, y: number): string {
-        const gridX = Math.floor(x / this.cellSize);
-        const gridY = Math.floor(y / this.cellSize);
-        return `${gridX},${gridY}`;
-      }
-      
       // Get all grid cells that a rectangle occupies
       private getRectangleCells(x: number, y: number, width: number, height: number): string[] {
         const cells: string[] = [];
@@ -596,7 +589,6 @@ export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes =
     const NODE_VERTICAL_SPACING = 200;
     const START_X = optimalStart.x;
     const START_Y = optimalStart.y;
-    const MIN_COMPONENT_SEPARATION = 500;
 
     // Initialize spatial grid for hard constraint enforcement
     const spatialGrid = new SpatialGrid();
