@@ -1079,6 +1079,9 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
       const componentNodes: Node[] = [];
 
       // Position nodes level by level with PowerPoint-style distribution
+      // Track occupied space to prevent overlaps
+      const occupiedSpace = new Map<number, number>(); // level -> maximum bottom Y position
+      
       for (let level = 0; level <= maxLevel; level++) {
         const levelNodes = nodesAtLevel.get(level) || [];
         
@@ -1087,25 +1090,31 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
         // Calculate level X position (left-to-right flow)
         const levelX = componentBaseX + level * LEVEL_HORIZONTAL_SPACING;
 
-        // Start Y position to center the level vertically
-        let currentY = START_Y + componentIndex * 100; // Slight offset per component
+        // Determine starting Y position for this level
+        let levelStartY = START_Y + componentIndex * 150; // Base offset per component
+        
+        // Ensure this level doesn't overlap with previous levels
+        const prevLevelMaxY = occupiedSpace.get(level - 1) || 0;
+        if (prevLevelMaxY > 0) {
+          levelStartY = Math.max(levelStartY, prevLevelMaxY + 100); // 100px gap between levels
+        }
 
-        // Position each node in the level with perfect distribution
+        let currentY = levelStartY;
+        let levelMaxY = levelStartY;
+
+        // Position each node in the level with proper spacing
         levelNodes.forEach((node, index) => {
           const nodeHeight = getNodeHeight(node);
           
-          // Perfect vertical distribution within the level
-          if (levelNodes.length === 1) {
-            // Single node - center it
-            currentY = START_Y + componentIndex * 100 + level * 50;
-          } else {
-            // Multiple nodes - distribute evenly
-            currentY = START_Y + componentIndex * 100 + index * (NODE_VERTICAL_SPACING + nodeHeight);
+          // Ensure minimum spacing between nodes at same level
+          if (index > 0) {
+            currentY += NODE_VERTICAL_SPACING; // Add spacing before each node (except first)
           }
 
+          const nodeY = currentY; // Store the Y position for this node
           const position = {
             x: levelX,
-            y: currentY
+            y: nodeY
           };
 
           componentNodes.push({
@@ -1113,8 +1122,16 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
             position
           });
 
-          console.log(`📍 Level ${level}, Node ${index}: ${node.id} positioned at (${levelX}, ${currentY})`);
+          // Update tracking for next node
+          const nodeBottom = nodeY + nodeHeight;
+          levelMaxY = Math.max(levelMaxY, nodeBottom);
+          currentY = nodeBottom; // Next node starts after this one
+
+          console.log(`📍 Level ${level}, Node ${index}: ${node.id} at (${levelX}, ${nodeY}) height: ${nodeHeight}`);
         });
+        
+        // Record the maximum Y position for this level
+        occupiedSpace.set(level, levelMaxY);
       }
 
       return componentNodes;
