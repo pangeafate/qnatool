@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Node } from 'reactflow';
-import { Download, Upload, Database, Trash2, Layout, HelpCircle, MessageSquare, Target, Share2, Eye, EyeOff, ChevronDown } from 'lucide-react';
+import { Download, Upload, Database, Trash2, Layout, HelpCircle, MessageSquare, Target, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { PathIdGenerator } from '../../utils/pathIdGenerator';
 import { ExportService } from '../../services/exportService';
 import { useFlowStore } from '../../stores/flowStore';
@@ -16,7 +16,7 @@ interface ToolbarProps {
 }
 
 export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes = [] }: ToolbarProps) {
-  const { setEdges, edges, nodes: storeNodes, setNodes, propagatePathToAll, toggleAllMeta, pathDisplaysFolded, combinationSectionsFolded } = useFlowStore();
+  const { setEdges, edges, nodes: storeNodes, setNodes, toggleAllMeta, pathDisplaysFolded, combinationSectionsFolded } = useFlowStore();
   
   // State for dropdown
   const [questionDropdownOpen, setQuestionDropdownOpen] = useState(false);
@@ -383,9 +383,7 @@ export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes =
     onClearAll?.();
   };
 
-  const propagatePaths = () => {
-    propagatePathToAll();
-  };
+
 
   const organizeNodes = () => {
     console.log('🎯 Smart Organize: Starting advanced layout algorithm...');
@@ -810,14 +808,6 @@ export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes =
         >
           <Upload size={16} />
           <span>Import JSON</span>
-        </button>
-        <button
-          onClick={propagatePaths}
-          className="flex items-center justify-center space-x-2 px-4 py-2 bg-sky-400 text-white rounded-lg hover:bg-sky-500 transition-colors text-sm font-medium w-[140px] h-10"
-          title="Propagate path IDs from root nodes to all connected nodes"
-        >
-          <Share2 size={16} />
-          <span>Propagate Path</span>
         </button>
       </div>
       
