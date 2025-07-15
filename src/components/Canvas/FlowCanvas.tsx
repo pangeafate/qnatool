@@ -887,12 +887,59 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
 
     console.log('🎯 Auto-organizing', nodes.length, 'nodes with PowerPoint-style layout');
 
+    // --- Smart Canvas Space Usage ---
+    const findOptimalStartPosition = (): { x: number; y: number } => {
+      // Always start from a clean, predictable position for organized layout
+      // This ensures consistent, professional-looking results
+      const CLEAN_START_X = 150;
+      const CLEAN_START_Y = 150;
+
+      // If we have very few nodes, use the clean default position
+      if (nodes.length <= 5) {
+        return { x: CLEAN_START_X, y: CLEAN_START_Y };
+      }
+
+      // For larger numbers of nodes, calculate current spread and optimize placement
+      let minX = Infinity, maxX = -Infinity;
+      let minY = Infinity, maxY = -Infinity;
+
+      nodes.forEach(node => {
+        minX = Math.min(minX, node.position.x);
+        maxX = Math.max(maxX, node.position.x);
+        minY = Math.min(minY, node.position.y);
+        maxY = Math.max(maxY, node.position.y);
+      });
+
+      const currentSpread = {
+        width: maxX - minX,
+        height: maxY - minY,
+        centerX: (minX + maxX) / 2,
+        centerY: (minY + maxY) / 2
+      };
+
+      // If content is very spread out (> 2000px wide), reorganize in a cleaner area
+      if (currentSpread.width > 2000 || currentSpread.height > 1500) {
+        console.log('📍 Content is spread out, using clean organized layout area');
+        return { x: CLEAN_START_X, y: CLEAN_START_Y };
+      }
+
+      // Otherwise, use current approximate center but ensure it's not too far left/top
+      const optimizedX = Math.max(CLEAN_START_X, Math.min(currentSpread.centerX - 400, 300));
+      const optimizedY = Math.max(CLEAN_START_Y, Math.min(currentSpread.centerY - 200, 300));
+
+      console.log('📍 Smart placement: Current spread:', currentSpread);
+      console.log('📍 Smart placement: Organized layout will start at:', { x: optimizedX, y: optimizedY });
+
+      return { x: optimizedX, y: optimizedY };
+    };
+
+    const optimalStart = findOptimalStartPosition();
+
     // --- PowerPoint-Style Layout Parameters ---
     const LEVEL_HORIZONTAL_SPACING = 400; // Clean horizontal spacing between levels (left-to-right flow)
     const NODE_VERTICAL_SPACING = 200; // Consistent vertical spacing between nodes at same level
-    const BRANCH_SEPARATION = 300; // Extra separation between different branches
-    const START_X = 150; // Left margin
-    const START_Y = 150; // Top margin
+    const START_X = optimalStart.x; // Smart starting X position
+    const START_Y = optimalStart.y; // Smart starting Y position
     const MIN_COMPONENT_SEPARATION = 500; // Separation between disconnected components
 
     // Function to calculate node height for proper spacing
@@ -1039,11 +1086,6 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
 
         // Calculate level X position (left-to-right flow)
         const levelX = componentBaseX + level * LEVEL_HORIZONTAL_SPACING;
-
-        // Calculate total height needed for this level
-        const totalHeightNeeded = levelNodes.reduce((sum, node) => {
-          return sum + getNodeHeight(node) + NODE_VERTICAL_SPACING;
-        }, -NODE_VERTICAL_SPACING); // Remove last spacing
 
         // Start Y position to center the level vertically
         let currentY = START_Y + componentIndex * 100; // Slight offset per component
