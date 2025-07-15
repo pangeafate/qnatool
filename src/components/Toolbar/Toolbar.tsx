@@ -917,6 +917,20 @@ export function Toolbar({ onAddNode, onLoadDemo, onClearAll, onSetNodes, nodes =
     } else {
       setNodes(allLayoutedNodes);
     }
+    
+    // VIEWPORT FIX: Focus on any root node after organizing to return viewport to where nodes are
+    setTimeout(() => {
+      const reactFlowInstance = (window as any).reactFlowInstance;
+      if (reactFlowInstance && allLayoutedNodes.length > 0) {
+        // Find any root node, or just use the first node
+        const rootNode = allLayoutedNodes.find(node => node.data?.isRoot) || allLayoutedNodes[0];
+        
+        if (rootNode) {
+          console.log(`📍 Focusing viewport on node ${rootNode.id} at position (${rootNode.position.x}, ${rootNode.position.y})`);
+          reactFlowInstance.setCenter(rootNode.position.x, rootNode.position.y, { zoom: reactFlowInstance.getZoom() });
+        }
+      }
+    }, 200); // Small delay to ensure nodes are updated before focusing
   };
 
   const handleImportAccept = () => {

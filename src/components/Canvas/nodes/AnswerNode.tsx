@@ -130,6 +130,12 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
   };
 
   const createLinkedQuestionNode = (sourceHandle?: string) => {
+    // CRITICAL FIX: Prevent nodes from floating during linked node creation
+    console.log('🔧 Creating linked question - preventing node sync interference');
+    if ((window as any).flowCanvasSetBulkUpdate) {
+      (window as any).flowCanvasSetBulkUpdate();
+    }
+    
     // Check if this handle already has a connection (enforce connection restrictions)
     const { edges } = useFlowStore.getState();
     const existingConnection = edges.find(edge => 
@@ -381,6 +387,12 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
 
   const createLinkedQuestionForCombination = (combinationId: string) => {
     console.log('Creating linked question for combination:', combinationId);
+    
+    // CRITICAL FIX: Prevent nodes from floating during linked node creation
+    console.log('🔧 Creating linked question for combination - preventing node sync interference');
+    if ((window as any).flowCanvasSetBulkUpdate) {
+      (window as any).flowCanvasSetBulkUpdate();
+    }
     
     // Check if this combination already has a connection
     const existingConnection = edges.find(edge => 
@@ -804,7 +816,7 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
                 {isCombinationsFolded ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
               </div>
               
-                            {!isCombinationsFolded && (
+                                          {!isCombinationsFolded && (
                 <div className="space-y-2">
                   {getCurrentCombinations().map((combination) => {
                 const isOrphanedCombination = getOrphanedCombinations().some(c => c.id === combination.id);
@@ -813,16 +825,16 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
                 return (
                   <div key={combination.id} className="relative">
                     <div 
-                      className={`flex items-center space-x-2 bg-white rounded-lg p-2 shadow-sm border transition-colors ${
+                      className={`group flex items-center space-x-2 bg-white rounded-lg p-2 shadow-sm border transition-colors hover:items-start ${
                         isConnectedCombination ? 'border-green-300 bg-green-50' : 
                         isOrphanedCombination ? 'border-orange-300 bg-orange-50' : 'border-gray-200'
                       }`}
-                                              onClick={stopPropagation}
-                        onMouseDown={stopPropagation}
-                        onDoubleClick={(e) => handleCombinationDoubleClick(combination.id, e)}
+                      onClick={stopPropagation}
+                      onMouseDown={stopPropagation}
+                      onDoubleClick={(e) => handleCombinationDoubleClick(combination.id, e)}
                     >
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-gray-900">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate group-hover:whitespace-normal group-hover:break-words group-hover:overflow-hidden">
                           {combination.label}
                         </div>
                       </div>
@@ -880,6 +892,36 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
               })}
                 </div>
               )}
+              
+              {/* CRITICAL FIX: Render invisible handles when folded to keep connections visible */}
+              {isCombinationsFolded && getCurrentCombinations().map((combination) => {
+                const isOrphanedCombination = getOrphanedCombinations().some(c => c.id === combination.id);
+                
+                return (
+                  <Handle
+                    key={`folded-handle-${combination.id}`}
+                    type="source"
+                    position={Position.Right}
+                    id={`combination-${combination.id}`}
+                    style={{ 
+                      top: '50%',
+                      right: '-5px',
+                      transform: 'translateY(-50%)',
+                      background: 'transparent', // Make invisible when folded
+                      width: '10px',
+                      height: '10px',
+                      zIndex: 10,
+                      cursor: 'pointer',
+                      border: 'none' // Remove border to make completely invisible
+                    }}
+                    className=""
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      createLinkedQuestionForCombination(combination.id);
+                    }}
+                  />
+                );
+              })}
             </div>
           </div>
         )}

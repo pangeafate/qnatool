@@ -162,6 +162,12 @@ export default function QuestionNode({ id, data, selected }: NodeProps<QuestionN
     
     const { nodes, addNode, addEdge, edges } = useFlowStore.getState();
     
+    // CRITICAL FIX: Prevent nodes from floating during linked node creation
+    console.log('🔧 Creating linked answer - preventing node sync interference');
+    if ((window as any).flowCanvasSetBulkUpdate) {
+      (window as any).flowCanvasSetBulkUpdate();
+    }
+    
     // Check if this question already has an outgoing connection (enforce connection restrictions)
     const existingConnection = edges.find(edge => edge.source === id);
     

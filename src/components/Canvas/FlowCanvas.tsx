@@ -576,6 +576,10 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
     
     console.log('Creating edge:', params);
     
+    // CRITICAL FIX: Set bulk update flag to prevent nodes sync effect from running during connection
+    isBulkUpdate.current = true;
+    console.log('🔧 Connection bulk update flag set - preventing node sync interference');
+    
     // Get source and target nodes
     const sourceNode = nodes.find(n => n.id === params.source);
     const targetNode = nodes.find(n => n.id === params.target);
@@ -697,6 +701,12 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
     
     // Propagate path ID from source to target with source handle information
     propagatePathIdOnConnection(params.source, params.target, params.sourceHandle || undefined);
+    
+    // Clear bulk update flag after all connection operations complete
+    setTimeout(() => {
+      isBulkUpdate.current = false;
+      console.log('🔧 Connection bulk update flag cleared - nodes sync can resume');
+    }, 100); // Small delay to ensure all store updates have finished
   }, [storeAddEdge, edges, propagateTopicOnConnection, propagatePathIdOnConnection, nodes]);
 
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
@@ -980,18 +990,12 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
         // First, organize the nodes
         organizeNodes();
         
-        // Then zoom out to fit all nodes with some delay
+        // REMOVED: fitView call that was moving viewport away from nodes
+        // The user wants to stay where they are after organizing
         setTimeout(() => {
-          reactFlowInstance.fitView({ 
-            padding: 0.2,  // 20% padding around the nodes
-            maxZoom: 0.8,  // Don't zoom in more than 80%
-            minZoom: 0.1,  // Allow zooming out to 10%
-            duration: 1000 // Smooth animation over 1 second
-          });
-          
-          // Call the completion callback
+          // Call the completion callback without changing viewport
           onAutoOrganizeComplete?.();
-        }, 500); // Wait 500ms after organize before zooming
+        }, 100); // Reduced delay since we're not doing fitView anymore
         
       }, 1000); // Wait 1 second before starting (reduced from 2000)
       
@@ -1659,7 +1663,33 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
             </div>
             <div className="flex items-center">
               <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
-              <span>Orphaned: {nodesState.filter(node => !edgesState.some(edge => edge.source === node.id || edge.target === node.id)).length}</span>
+              <span>Orphaned: {nodesState.filter(node => node.data?.isOrphaned).length}</span>
+              {nodesState.filter(node => node.data?.isOrphaned).length > 0 && (
+                <button
+                  className="ml-2 px-2 py-1 bg-orange-500 text-white text-xs rounded hover:bg-orange-600 transition-colors"
+                  onClick={() => {
+                    const orphanedNodes = nodesState.filter(node => node.data?.isOrphaned);
+                    if (orphanedNodes.length === 0) return;
+                    
+                    // Get current cycle index from a persistent store or default to 0
+                    const currentIndex = (window as any).__orphanCycleIndex || 0;
+                    const nextIndex = (currentIndex + 1) % orphanedNodes.length;
+                    (window as any).__orphanCycleIndex = nextIndex;
+                    
+                    const targetNode = orphanedNodes[nextIndex];
+                    console.log(`🎯 Cycling to orphaned node ${targetNode.id} (${nextIndex + 1}/${orphanedNodes.length})`);
+                    
+                    // Center viewport on the orphaned node
+                    reactFlowInstance.setCenter(targetNode.position.x, targetNode.position.y, { 
+                      zoom: Math.max(reactFlowInstance.getZoom(), 0.8), // Don't zoom out too much
+                      duration: 800 
+                    });
+                  }}
+                  title={`Cycle through ${nodesState.filter(node => node.data?.isOrphaned).length} orphaned nodes`}
+                >
+                  →
+                </button>
+              )}
             </div>
           </div>
         </Panel>
