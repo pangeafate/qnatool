@@ -878,67 +878,51 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
 
   // Smart organize function - uses same algorithm as Toolbar
   const organizeNodes = () => {
-    console.log('🎯 Smart Auto-Organize: Starting advanced layout algorithm...');
+    console.log('🎯 PowerPoint-Style Auto-Organize: Starting distribution and alignment...');
     
     if (nodes.length < 2) {
       console.log('Not enough nodes to organize');
       return;
     }
 
-    console.log('🎯 Auto-organizing', nodes.length, 'nodes with smart layout');
+    console.log('🎯 Auto-organizing', nodes.length, 'nodes with PowerPoint-style layout');
 
-    // Use the exact same smart layout algorithm as the Toolbar with dynamic vertical spacing for combinations
-    const horizontalSpacing = 650;
-    const startY = 200;
-    const baseLayerVerticalSpacing = 455; // Base minimum spacing between hierarchy levels
-    const siblingHorizontalSpacing = 156;
-    const minNodeSpacing = 150; // Minimum spacing between any two nodes
-    
-    // Function to calculate dynamic spacing based on node content
-    const calculateNodeHeight = (node: Node) => {
-      let baseHeight = 100; // Default node height
+    // --- PowerPoint-Style Layout Parameters ---
+    const LEVEL_HORIZONTAL_SPACING = 400; // Clean horizontal spacing between levels (left-to-right flow)
+    const NODE_VERTICAL_SPACING = 200; // Consistent vertical spacing between nodes at same level
+    const BRANCH_SEPARATION = 300; // Extra separation between different branches
+    const START_X = 150; // Left margin
+    const START_Y = 150; // Top margin
+    const MIN_COMPONENT_SEPARATION = 500; // Separation between disconnected components
+
+    // Function to calculate node height for proper spacing
+    const getNodeHeight = (node: Node): number => {
+      let height = 120; // Base height
       
       if (node.type === 'answer' && node.data?.answerType === 'combinations') {
         const combinations = node.data?.combinations || [];
         const variants = node.data?.variants || [];
         
-        // Always calculate for combination nodes regardless of fold state during organize
-        // (we want proper spacing even if they're currently folded but could be expanded)
         if (combinations.length > 0) {
-          // More accurate height estimates based on actual UI:
-          // Each variant takes ~50px when expanded (including padding)
+          // Calculate expanded height for combination nodes
           const variantsHeight = variants.length * 50;
-          // Header section for combinations: ~100px
-          const combinationsHeaderHeight = 100;
-          // Each combination row with status takes ~70px (including borders, padding)
           const combinationsHeight = combinations.length * 70;
-          // Base node padding and structure: ~150px
-          const baseStructureHeight = 150;
-          
-          baseHeight = baseStructureHeight + variantsHeight + combinationsHeaderHeight + combinationsHeight;
+          height = 200 + variantsHeight + combinationsHeight;
         }
       }
       
-      return baseHeight;
+      return height;
     };
-    
-    // Build comprehensive graph analysis
+
+    // Build graph relationships
     const children = new Map<string, string[]>();
     const parents = new Map<string, string[]>();
-    const incomingEdges = new Map<string, number>();
-    const outgoingEdges = new Map<string, number>();
-    const directConnections = new Map<string, Set<string>>();
     
-    // Initialize maps
     nodes.forEach(node => {
       children.set(node.id, []);
       parents.set(node.id, []);
-      incomingEdges.set(node.id, 0);
-      outgoingEdges.set(node.id, 0);
-      directConnections.set(node.id, new Set());
     });
     
-    // Build relationship maps from edges
     edges.forEach(edge => {
       const parentChildren = children.get(edge.source) || [];
       parentChildren.push(edge.target);
@@ -947,22 +931,13 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
       const childParents = parents.get(edge.target) || [];
       childParents.push(edge.source);
       parents.set(edge.target, childParents);
-      
-      const incoming = incomingEdges.get(edge.target) || 0;
-      incomingEdges.set(edge.target, incoming + 1);
-      
-      const outgoing = outgoingEdges.get(edge.source) || 0;
-      outgoingEdges.set(edge.source, outgoing + 1);
-      
-      directConnections.get(edge.source)?.add(edge.target);
-      directConnections.get(edge.target)?.add(edge.source);
     });
-    
+
     // Find connected components
     const connectedComponents: Node[][] = [];
     const visited = new Set<string>();
     
-    const findComponent = (startNode: Node): Node[] => {
+    const getConnectedComponent = (startNode: Node): Node[] => {
       const component: Node[] = [];
       const stack = [startNode];
       const componentVisited = new Set<string>();
@@ -975,8 +950,10 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
         visited.add(node.id);
         component.push(node);
         
-        const connections = directConnections.get(node.id) || new Set();
-        connections.forEach(connectedId => {
+        // Add connected nodes (both children and parents)
+        const nodeChildren = children.get(node.id) || [];
+        const nodeParents = parents.get(node.id) || [];
+        [...nodeChildren, ...nodeParents].forEach(connectedId => {
           const connectedNode = nodes.find(n => n.id === connectedId);
           if (connectedNode && !componentVisited.has(connectedId)) {
             stack.push(connectedNode);
@@ -986,44 +963,50 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
       
       return component;
     };
-    
+
     nodes.forEach(node => {
       if (!visited.has(node.id)) {
-        const component = findComponent(node);
+        const component = getConnectedComponent(node);
         if (component.length > 0) {
           connectedComponents.push(component);
         }
       }
     });
-    
-    // Layout each component
-    const layoutComponent = (component: Node[], componentIndex: number) => {
+
+    console.log('🎯 Components found:', connectedComponents.length);
+
+    // Layout each component with PowerPoint-style distribution and alignment
+    const layoutComponent = (component: Node[], componentIndex: number): Node[] => {
       const componentNodeIds = new Set(component.map(n => n.id));
-      const componentRoots = component.filter(node => {
+      
+      // Find root nodes (nodes with no parents within this component)
+      const rootNodes = component.filter(node => {
         const nodeParents = parents.get(node.id) || [];
         return nodeParents.filter(p => componentNodeIds.has(p)).length === 0;
       });
       
-      if (componentRoots.length === 0 && component.length > 0) {
-        componentRoots.push(component[0]);
+      if (rootNodes.length === 0 && component.length > 0) {
+        // If no clear root, pick the first node
+        rootNodes.push(component[0]);
       }
-      
+
+      // Assign levels using BFS from roots
       const nodeLevel = new Map<string, number>();
       const nodesAtLevel = new Map<number, Node[]>();
-      const componentVisited = new Set<string>();
+      const processedNodes = new Set<string>();
       let maxLevel = 0;
-      
+
       const queue: { node: Node; level: number }[] = [];
-      componentRoots.forEach(node => {
-        queue.push({ node, level: 0 });
-        nodeLevel.set(node.id, 0);
+      rootNodes.forEach(root => {
+        queue.push({ node: root, level: 0 });
+        nodeLevel.set(root.id, 0);
       });
-      
+
       while (queue.length > 0) {
         const { node, level } = queue.shift()!;
         
-        if (componentVisited.has(node.id)) continue;
-        componentVisited.add(node.id);
+        if (processedNodes.has(node.id)) continue;
+        processedNodes.add(node.id);
         
         maxLevel = Math.max(maxLevel, level);
         
@@ -1031,116 +1014,94 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
         levelNodes.push(node);
         nodesAtLevel.set(level, levelNodes);
         
+        // Add children to next level
         const nodeChildren = children.get(node.id) || [];
         nodeChildren.forEach(childId => {
-          if (componentNodeIds.has(childId)) {
+          if (componentNodeIds.has(childId) && !processedNodes.has(childId)) {
             const childNode = component.find(n => n.id === childId);
-            if (childNode && !componentVisited.has(childId)) {
+            if (childNode) {
               queue.push({ node: childNode, level: level + 1 });
               nodeLevel.set(childId, level + 1);
             }
           }
         });
       }
-      
-      const componentWidth = Math.max(1200, (Math.max(...Array.from(nodesAtLevel.values()).map(level => level.length)) - 1) * horizontalSpacing);
-      // Use fixed separation between components instead of multiplying by component width
-      const componentBaseX = componentIndex * 800; // Fixed 800px separation between branch starting points
-      
+
+      // Calculate component bounds and positioning
+      const componentBaseX = START_X + componentIndex * MIN_COMPONENT_SEPARATION;
       const componentNodes: Node[] = [];
-      // Track INDIVIDUAL node positions to prevent any overlaps
-      const nodePositions = new Map<string, { x: number; y: number; bottom: number }>();
-      
+
+      // Position nodes level by level with PowerPoint-style distribution
       for (let level = 0; level <= maxLevel; level++) {
         const levelNodes = nodesAtLevel.get(level) || [];
         
-        levelNodes.sort((a, b) => {
-          const aConnections = directConnections.get(a.id)?.size || 0;
-          const bConnections = directConnections.get(b.id)?.size || 0;
-          return bConnections - aConnections;
-        });
-        
+        if (levelNodes.length === 0) continue;
+
+        // Calculate level X position (left-to-right flow)
+        const levelX = componentBaseX + level * LEVEL_HORIZONTAL_SPACING;
+
+        // Calculate total height needed for this level
+        const totalHeightNeeded = levelNodes.reduce((sum, node) => {
+          return sum + getNodeHeight(node) + NODE_VERTICAL_SPACING;
+        }, -NODE_VERTICAL_SPACING); // Remove last spacing
+
+        // Start Y position to center the level vertically
+        let currentY = START_Y + componentIndex * 100; // Slight offset per component
+
+        // Position each node in the level with perfect distribution
         levelNodes.forEach((node, index) => {
-          const levelWidth = (levelNodes.length - 1) * horizontalSpacing;
-          const levelStartX = componentBaseX + (componentWidth - levelWidth) / 2;
+          const nodeHeight = getNodeHeight(node);
           
-          let microAdjustmentX = 0;
-          const nodeConnections = directConnections.get(node.id) || new Set();
-          if (nodeConnections.size > 0) {
-            microAdjustmentX = (index - levelNodes.length / 2) * siblingHorizontalSpacing * 0.1;
+          // Perfect vertical distribution within the level
+          if (levelNodes.length === 1) {
+            // Single node - center it
+            currentY = START_Y + componentIndex * 100 + level * 50;
+          } else {
+            // Multiple nodes - distribute evenly
+            currentY = START_Y + componentIndex * 100 + index * (NODE_VERTICAL_SPACING + nodeHeight);
           }
-          
-          const nodeX = levelStartX + index * horizontalSpacing + microAdjustmentX;
-          
-          // Calculate Y position ensuring no overlaps with ANY previously positioned nodes
-          let nodeY = startY + level * baseLayerVerticalSpacing;
-          
-          // Check for conflicts with ALL previously positioned nodes
-          let hasConflict = true;
-          while (hasConflict) {
-            hasConflict = false;
-            
-            for (const [, existingPos] of nodePositions.entries()) {
-              // Check if this position would cause overlap
-              const horizontalOverlap = Math.abs(nodeX - existingPos.x) < (horizontalSpacing * 0.8); // Allow some horizontal tolerance
-              const verticalOverlap = nodeY < existingPos.bottom + minNodeSpacing;
-              
-              if (horizontalOverlap && verticalOverlap) {
-                // Move this node below the conflicting node
-                nodeY = existingPos.bottom + minNodeSpacing;
-                hasConflict = true;
-                break;
-              }
-            }
-          }
-          
-          const nodeHeight = calculateNodeHeight(node);
-          const nodeBottom = nodeY + nodeHeight;
-          
-          // Store this node's position info
-          nodePositions.set(node.id, { x: nodeX, y: nodeY, bottom: nodeBottom });
-          
-          console.log(`📍 Positioned ${node.id} at (${nodeX}, ${nodeY}) with height ${nodeHeight}, bottom: ${nodeBottom}`);
-          
+
           const position = {
-            x: nodeX,
-            y: nodeY
+            x: levelX,
+            y: currentY
           };
-          
+
           componentNodes.push({
             ...node,
             position
           });
+
+          console.log(`📍 Level ${level}, Node ${index}: ${node.id} positioned at (${levelX}, ${currentY})`);
         });
       }
-      
+
       return componentNodes;
     };
-    
-    // Layout all components and combine results
+
+    // Layout all components
     const allLayoutedNodes: Node[] = [];
     connectedComponents.forEach((component, index) => {
       const layoutedComponent = layoutComponent(component, index);
       allLayoutedNodes.push(...layoutedComponent);
     });
-    
-    // Add isolated nodes
+
+    // Handle isolated nodes
     const isolatedNodes = nodes.filter(node => 
       !allLayoutedNodes.some(layouted => layouted.id === node.id)
     );
-    
+
     isolatedNodes.forEach((node, index) => {
       allLayoutedNodes.push({
         ...node,
         position: {
-          x: 100 + index * 300,
-          y: startY
+          x: START_X + index * 300,
+          y: START_Y + connectedComponents.length * 200
         }
       });
     });
-    
-    console.log('🎯 Final layout complete. Total nodes positioned:', allLayoutedNodes.length);
-    
+
+    console.log('🎯 PowerPoint-style layout complete. Nodes positioned:', allLayoutedNodes.length);
+
     // Apply the new positions
     setNodes(allLayoutedNodes);
   };
