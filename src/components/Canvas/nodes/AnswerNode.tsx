@@ -268,6 +268,13 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
         label: variantTexts.join(' + ') // Use actual variant text instead of "Variants X + Y"
       };
       
+      console.log(`🔧 Generated combination:`, {
+        id: combination.id,
+        variantIndices: combination.variantIndices,
+        pathId: combination.pathId,
+        label: combination.label
+      });
+      
       combinations.push(combination);
     }
     
@@ -280,8 +287,16 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
     const currentVariants = data.variants || [];
     if (currentVariants.length < 2) return [];
     
-    // Use stored combinations or generate all possible ones
-    return data.combinations || generateAllCombinations(currentVariants);
+    // Generate combinations and ensure they're stored in node data
+    const combinations = data.combinations || generateAllCombinations(currentVariants);
+    
+    // If combinations were generated (not stored), update the node data
+    if (!data.combinations && combinations.length > 0) {
+      console.log(`🔧 Storing generated combinations in node data:`, combinations);
+      updateNode(id, { combinations });
+    }
+    
+    return combinations;
   };
 
   const getConnectedCombinations = (): VariantCombination[] => {
