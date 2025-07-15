@@ -206,9 +206,21 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
       score: 0,
     };
     const currentVariants = data.variants || [];
-    updateNode(id, {
-      variants: [...currentVariants, newVariant]
-    });
+    const updatedVariants = [...currentVariants, newVariant];
+    
+    // If this is a combinations answer, regenerate combinations
+    if (answerType === 'combinations') {
+      const newCombinations = generateAllCombinations(updatedVariants);
+      updateNode(id, {
+        variants: updatedVariants,
+        combinations: newCombinations
+      });
+      console.log(`🔄 Regenerated ${newCombinations.length} combinations after adding variant`);
+    } else {
+      updateNode(id, {
+        variants: updatedVariants
+      });
+    }
   };
 
   const updateVariant = (variantId: string, updates: Partial<AnswerVariant>) => {
@@ -216,7 +228,18 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
     const updatedVariants = currentVariants.map(v => 
       v.id === variantId ? { ...v, ...updates } : v
     );
-    updateNode(id, { variants: updatedVariants });
+    
+    // If this is a combinations answer and variant text changed, regenerate combinations
+    if (answerType === 'combinations' && updates.text !== undefined) {
+      const newCombinations = generateAllCombinations(updatedVariants);
+      updateNode(id, { 
+        variants: updatedVariants,
+        combinations: newCombinations
+      });
+      console.log(`🔄 Regenerated ${newCombinations.length} combinations after updating variant text`);
+    } else {
+      updateNode(id, { variants: updatedVariants });
+    }
   };
 
   // Info popup handlers
@@ -242,7 +265,18 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
     const currentVariants = data.variants || [];
     if (currentVariants.length > 1) {
       const updatedVariants = currentVariants.filter(v => v.id !== variantId);
-      updateNode(id, { variants: updatedVariants });
+      
+      // If this is a combinations answer, regenerate combinations
+      if (answerType === 'combinations') {
+        const newCombinations = updatedVariants.length >= 2 ? generateAllCombinations(updatedVariants) : [];
+        updateNode(id, { 
+          variants: updatedVariants,
+          combinations: newCombinations
+        });
+        console.log(`🔄 Regenerated ${newCombinations.length} combinations after removing variant`);
+      } else {
+        updateNode(id, { variants: updatedVariants });
+      }
     }
   };
 
@@ -287,16 +321,22 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
     const currentVariants = data.variants || [];
     if (currentVariants.length < 2) return [];
     
-    // Generate combinations and ensure they're stored in node data
-    const combinations = data.combinations || generateAllCombinations(currentVariants);
+    // Generate fresh combinations based on current variants
+    const freshCombinations = generateAllCombinations(currentVariants);
+    const storedCombinations = data.combinations || [];
     
-    // If combinations were generated (not stored), update the node data
-    if (!data.combinations && combinations.length > 0) {
-      console.log(`🔧 Storing generated combinations in node data:`, combinations);
-      updateNode(id, { combinations });
+    // Check if stored combinations are out of sync with current variants
+    // This happens when variants are added/removed but combinations weren't regenerated
+    const expectedCombinationCount = Math.pow(2, currentVariants.length) - 1;
+    const isOutOfSync = storedCombinations.length !== expectedCombinationCount;
+    
+    if (isOutOfSync || storedCombinations.length === 0) {
+      console.log(`🔧 Combinations out of sync (stored: ${storedCombinations.length}, expected: ${expectedCombinationCount}). Regenerating...`);
+      updateNode(id, { combinations: freshCombinations });
+      return freshCombinations;
     }
     
-    return combinations;
+    return storedCombinations;
   };
 
   const getConnectedCombinations = (): VariantCombination[] => {
@@ -407,7 +447,22 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
 
   const handleAnswerTypeChange = (newType: 'single' | 'multiple' | 'combinations') => {
     setAnswerType(newType);
-    updateNode(id, { answerType: newType });
+    
+    // If switching to combinations mode, generate combinations
+    const updateData: any = { answerType: newType };
+    if (newType === 'combinations') {
+      const currentVariants = data.variants || [];
+      if (currentVariants.length >= 2) {
+        const newCombinations = generateAllCombinations(currentVariants);
+        updateData.combinations = newCombinations;
+        console.log(`🔄 Generated ${newCombinations.length} combinations when switching to combinations mode`);
+      }
+    } else {
+      // Clear combinations when switching away from combinations mode
+      updateData.combinations = [];
+    }
+    
+    updateNode(id, updateData);
     
     // Clean up ALL outgoing edges and pathIDs when switching modes
     const { edges, deleteEdge, nodes, updateNode: updateNodeInStore } = useFlowStore.getState();
