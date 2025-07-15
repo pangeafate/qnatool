@@ -47,9 +47,28 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
 
   // Auto-resize functionality for textareas
   const autoResize = (textarea: HTMLTextAreaElement) => {
+    // Reset height to auto to get the correct scrollHeight
     textarea.style.height = 'auto';
+    // Set height to scrollHeight to show all content
     textarea.style.height = textarea.scrollHeight + 'px';
   };
+
+  // Auto-resize all variant textareas when variants change
+  useEffect(() => {
+    const resizeAllTextareas = () => {
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        const textareas = document.querySelectorAll(`[data-node-id="${id}"] textarea`);
+        textareas.forEach((textarea) => {
+          if (textarea instanceof HTMLTextAreaElement) {
+            autoResize(textarea);
+          }
+        });
+      }, 10);
+    };
+
+    resizeAllTextareas();
+  }, [data.variants, id]); // Re-run when variants change
 
   // Sync answerType with data changes
   useEffect(() => {
@@ -510,6 +529,7 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
 
   return (
     <div
+      data-node-id={id}
       className={`
         bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg shadow-lg border-2 p-4 w-[350px]
         ${selected ? 'border-purple-500 shadow-xl ring-2 ring-purple-200' : 'border-gray-200 hover:border-gray-300'}
@@ -679,17 +699,25 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
                         autoResize(e.target);
                       }}
                       onInput={(e) => autoResize(e.target as HTMLTextAreaElement)}
-                      className="flex-1 text-sm bg-transparent focus:outline-none resize-none min-h-[24px] leading-relaxed"
+                      className="flex-1 text-sm bg-transparent focus:outline-none resize-none min-h-[24px] leading-relaxed overflow-hidden"
                       placeholder="Answer text..."
                       rows={1}
                       style={{ 
                         wordWrap: 'break-word',
                         wordBreak: 'break-word',
                         whiteSpace: 'pre-wrap',
-                        overflowWrap: 'break-word'
+                        overflowWrap: 'break-word',
+                        overflow: 'hidden', // Prevent scrollbars
+                        boxSizing: 'border-box' // Include padding in height calculation
                       }}
                       onFocus={stopPropagation}
                       onKeyDown={stopPropagation}
+                      ref={(textarea) => {
+                        // Auto-resize on mount/update
+                        if (textarea) {
+                          setTimeout(() => autoResize(textarea), 0);
+                        }
+                      }}
                     />
                     <input
                       type="number"
