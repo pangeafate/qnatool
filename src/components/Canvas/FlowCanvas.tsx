@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import ReactFlow, {
   Controls,
   Background,
@@ -57,50 +57,174 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
     clearSelection,
     setNodes,
     focusNodeId,
-    clearFocusNode
+    clearFocusNode,
+    copiedNodeIds
   } = useFlowStore();
-  const [nodesState, setNodesLocal, onNodesChange] = useNodesState(nodes);
+  // Process nodes for React Flow (styles will be applied in useEffect)
+  const processedNodes = useMemo(() => {
+    console.log('🎭 Processing nodes for copied state:', { 
+      totalNodes: nodes.length, 
+      copiedNodeIds: copiedNodeIds,
+      copiedCount: copiedNodeIds.length 
+    });
+    
+    return nodes.map(node => {
+      const isCopied = copiedNodeIds.includes(node.id);
+      if (isCopied) {
+        console.log(`✨ Node ${node.id} will get inline animation styles`);
+      }
+      return {
+        ...node
+      };
+    });
+  }, [nodes, copiedNodeIds]);
+  
+  const [nodesState, setNodesLocal, onNodesChange] = useNodesState(processedNodes);
   const [edgesState, setEdgesStateLocal, onEdgesChange] = useEdgesState(edges);
   const reactFlowInstance = useReactFlow();
+
+  // Find sibling nodes for minimap highlighting
+  const { upstreamSiblings, downstreamSiblings } = useMemo(() => {
+    if (selectedNodeIds.length === 0) {
+      return { upstreamSiblings: new Set<string>(), downstreamSiblings: new Set<string>() };
+    }
+
+    const upstream = new Set<string>();
+    const downstream = new Set<string>();
+
+    selectedNodeIds.forEach(selectedId => {
+      // Find upstream siblings (nodes that connect TO the selected node)
+      edgesState.forEach(edge => {
+        if (edge.target === selectedId && !selectedNodeIds.includes(edge.source)) {
+          upstream.add(edge.source);
+        }
+      });
+
+      // Find downstream siblings (nodes that the selected node connects TO)
+      edgesState.forEach(edge => {
+        if (edge.source === selectedId && !selectedNodeIds.includes(edge.target)) {
+          downstream.add(edge.target);
+        }
+      });
+    });
+
+    return { upstreamSiblings: upstream, downstreamSiblings: downstream };
+  }, [selectedNodeIds, edgesState]);
+  
+  // Apply copied node animation via direct DOM manipulation
+  React.useEffect(() => {
+    console.log('🎨 Applying copied animation to DOM elements directly');
+    
+    // Apply animation to copied nodes
+    copiedNodeIds.forEach(nodeId => {
+      const nodeElement = document.querySelector(`[data-id="${nodeId}"]`) as HTMLElement;
+      if (nodeElement) {
+        console.log(`✨ Directly applying copied animation to DOM node ${nodeId}`);
+        nodeElement.classList.add('copied');
+        nodeElement.style.animation = 'copiedNodePulse 2s ease-in-out 1';
+        
+        // Add animation end listener to clean up automatically
+        const handleAnimationEnd = () => {
+          console.log(`🎬 Animation ended for node ${nodeId}, cleaning up`);
+          nodeElement.classList.remove('copied');
+          nodeElement.style.animation = '';
+          nodeElement.removeEventListener('animationend', handleAnimationEnd);
+        };
+        nodeElement.addEventListener('animationend', handleAnimationEnd);
+      } else {
+        console.log(`❌ Could not find DOM element for copied node ${nodeId}`);
+      }
+    });
+    
+    // Remove animation from nodes that are no longer copied
+    const allNodes = document.querySelectorAll('.react-flow__node');
+    allNodes.forEach(nodeElement => {
+      const nodeId = nodeElement.getAttribute('data-id');
+      if (nodeId && !copiedNodeIds.includes(nodeId)) {
+        const htmlElement = nodeElement as HTMLElement;
+                 if (htmlElement.classList.contains('copied')) {
+           console.log(`🧹 Removing copied animation from DOM node ${nodeId} (fallback cleanup)`);
+           htmlElement.classList.remove('copied');
+           htmlElement.style.animation = '';
+         }
+      }
+    });
+    
+    // Sync processedNodes with React Flow
+    setNodesLocal(processedNodes);
+  }, [processedNodes, copiedNodeIds, setNodesLocal]);
   
   // Selection box state
   const [selectionBox, setSelectionBox] = useState<{
-    startX: number;
-    startY: number;
-    endX: number;
-    endY: number;
+    start: { x: number; y: number };
+    end: { x: number; y: number };
     isSelecting: boolean;
   } | null>(null);
 
-  // Track if shift key is pressed for cursor feedback
+  // Track keyboard state for selection modes
   const [isShiftPressed, setIsShiftPressed] = useState(false);
+  const [isDPressed, setIsDPressed] = useState(false);
+  
+  // Derived states
+  const isShiftSelectMode = isShiftPressed && !isDPressed;
+  const isShiftDeleteMode = isShiftPressed && isDPressed;
+  const isAnySelectionMode = isShiftSelectMode || isShiftDeleteMode;
 
-  // Listen for keyboard events to track shift key
+  // Listen for keyboard events to track key combinations
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Shift') {
-        console.log('Shift key pressed - entering selection mode');
         setIsShiftPressed(true);
+        if (isDPressed) {
+          console.log('Shift+D mode - entering delete selection mode');
+        } else {
+          console.log('Shift key pressed - entering copy selection mode');
+        }
+      }
+      if (event.key === 'd' || event.key === 'D') {
+        setIsDPressed(true);
+        if (isShiftPressed) {
+          console.log('Shift+D mode - entering delete selection mode');
+        }
       }
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
       if (event.key === 'Shift') {
         console.log('Shift key released - exiting selection mode');
-        setIsShiftPressed(false);
-        // If we were selecting and shift is released, cancel selection
-        if (selectionBox?.isSelecting) {
-          setSelectionBox(null);
+        
+        // If there are selected nodes when Shift is released, make them pulse
+        // This handles cases like Shift+click on individual nodes (not drag selection)
+        const currentSelectedIds = useFlowStore.getState().selectedNodeIds;
+        if (currentSelectedIds.length > 0) {
+          console.log(`✨ Shift released with ${currentSelectedIds.length} selected nodes - triggering pulse as fallback`);
+          useFlowStore.getState().markNodesAsCopied(currentSelectedIds);
         }
+        
+        setIsShiftPressed(false);
+      }
+      if (event.key === 'd' || event.key === 'D') {
+        console.log('D key released');
+        setIsDPressed(false);
+      }
+    };
+
+    // Global mouse up handler to end selection even if mouse is released outside component
+    const handleGlobalMouseUp = () => {
+      if (selectionBox?.isSelecting) {
+        console.log('Global mouse up - ending selection');
+        onMouseUp(); // Complete the selection
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
     };
   }, [selectionBox?.isSelecting]);
   
@@ -263,9 +387,11 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
       // positions with the ones from react-flow's state if they exist.
       return nodes.map(storeNode => {
         const existingPosition = positionMap.get(storeNode.id);
+        const existingNode = currentNodes.find(n => n.id === storeNode.id);
         return {
           ...storeNode,
           position: existingPosition || storeNode.position,
+          selected: existingNode?.selected || selectedNodeIds.includes(storeNode.id), // Preserve React Flow selection
           data: {
             ...storeNode.data,
             isOrphaned: orphanedNodeIds.includes(storeNode.id),
@@ -466,78 +592,187 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
 
   // Selection box mouse handlers
   const onMouseDown = useCallback((event: React.MouseEvent) => {
-    // Only start selection if clicking on the pane (not on nodes) AND holding Shift key
-    if (event.target === event.currentTarget && isShiftPressed) {
-      console.log('Starting selection box - Shift is pressed');
-      event.preventDefault(); // Prevent default panning behavior
-      event.stopPropagation(); // Stop event bubbling
-      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-      setSelectionBox({
-        startX: event.clientX - rect.left,
-        startY: event.clientY - rect.top,
-        endX: event.clientX - rect.left,
-        endY: event.clientY - rect.top,
-        isSelecting: true,
-      });
+    // Start selection if in any selection mode and not clicking on interactive elements
+    if (isAnySelectionMode) {
+      const target = event.target as HTMLElement;
+      const isInteractiveElement = target.closest('button, input, textarea, select, .react-flow__handle, .react-flow__controls, .react-flow__minimap');
+      
+      if (!isInteractiveElement) {
+        console.log(`Starting selection box - ${isShiftDeleteMode ? 'Shift+D delete mode' : 'Shift copy mode'}`);
+        event.preventDefault(); // Prevent default panning behavior
+        event.stopPropagation(); // Stop event bubbling
+        
+        const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+        setSelectionBox({
+          start: { x: event.clientX - rect.left, y: event.clientY - rect.top },
+          end: { x: event.clientX - rect.left, y: event.clientY - rect.top },
+          isSelecting: true,
+        });
+      }
     }
   }, [isShiftPressed]);
 
   const onMouseMove = useCallback((event: React.MouseEvent) => {
     if (selectionBox?.isSelecting) {
       event.preventDefault(); // Prevent default behavior during selection
+      event.stopPropagation(); // Stop event bubbling
+      
       const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
       setSelectionBox(prev => prev ? {
         ...prev,
-        endX: event.clientX - rect.left,
-        endY: event.clientY - rect.top,
+        end: { x: event.clientX - rect.left, y: event.clientY - rect.top },
       } : null);
     }
-  }, [selectionBox]);
+  }, [selectionBox?.isSelecting]);
 
-  const onMouseUp = useCallback(() => {
-    if (selectionBox?.isSelecting && reactFlowInstance) {
-      console.log('Finishing selection box');
-      // Calculate selection box bounds
-      const minX = Math.min(selectionBox.startX, selectionBox.endX);
-      const maxX = Math.max(selectionBox.startX, selectionBox.endX);
-      const minY = Math.min(selectionBox.startY, selectionBox.endY);
-      const maxY = Math.max(selectionBox.startY, selectionBox.endY);
-
-      // Only select if the box has meaningful size (avoid accidental selections)
-      const boxWidth = maxX - minX;
-      const boxHeight = maxY - minY;
+  // Handle mouse up - complete selection box
+  const onMouseUp = useCallback((event?: React.MouseEvent) => {
+    if (selectionBox && reactFlowInstance) {
+      // Prevent the mouse up event from bubbling to onPaneClick
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
       
-      console.log(`Selection box size: ${boxWidth}x${boxHeight}`);
+      const { x: startX, y: startY } = selectionBox.start;
+      const { x: endX, y: endY } = selectionBox.end;
       
-      if (boxWidth > 10 && boxHeight > 10) {
+      // Get the proper coordinates for the selection box
+      const minX = Math.min(startX, endX);
+      const maxX = Math.max(startX, endX);
+      const minY = Math.min(startY, endY);
+      const maxY = Math.max(startY, endY);
+      
+      // Only select if the selection box is large enough (avoid accidental tiny selections)
+      if (Math.abs(maxX - minX) > 5 || Math.abs(maxY - minY) > 5) {
         // Convert screen coordinates to flow coordinates
         const startFlow = reactFlowInstance.screenToFlowPosition({ x: minX, y: minY });
         const endFlow = reactFlowInstance.screenToFlowPosition({ x: maxX, y: maxY });
-
-        // Find nodes within selection box
+        
+        console.log('Selection box coordinates:', { startFlow, endFlow });
+        
+        // Find nodes within the selection box
         const selectedNodes = nodesState.filter(node => {
           const nodeX = node.position.x;
           const nodeY = node.position.y;
-          const nodeWidth = 280; // Approximate node width
-          const nodeHeight = 150; // Approximate node height
+          const nodeWidth = node.width || 280;
+          const nodeHeight = node.height || 150;
           
           // Check if node overlaps with selection box
-          return (
+          const overlaps = (
             nodeX < endFlow.x && 
-            nodeX + nodeWidth > startFlow.x &&
+            nodeX + nodeWidth > startFlow.x && 
             nodeY < endFlow.y && 
             nodeY + nodeHeight > startFlow.y
           );
+          
+          if (overlaps) {
+            console.log(`Node ${node.id} overlaps: pos(${nodeX}, ${nodeY}) size(${nodeWidth}, ${nodeHeight})`);
+          }
+          
+          return overlaps;
         });
 
         console.log(`Selected ${selectedNodes.length} nodes:`, selectedNodes.map(n => n.id));
-        // Update selection
-        setSelectedNodeIds(selectedNodes.map(node => node.id));
+        
+                  // Update both our store and React Flow's selection
+          const selectedNodeIds = selectedNodes.map(node => node.id);
+          
+          // Update our store first
+          useFlowStore.setState(state => {
+            state.selectedNodeIds = selectedNodeIds;
+            return state;
+          });
+          
+          console.log(`🎯 Updated selection: store=${selectedNodeIds.length} nodes`);
+          
+          if (selectedNodeIds.length > 0) {
+          if (isShiftDeleteMode) {
+            // DELETE MODE: Immediately delete selected nodes
+            console.log(`🗑️ Deleting ${selectedNodeIds.length} nodes in Shift+D mode`);
+            useFlowStore.getState().deleteNodes(selectedNodeIds);
+            console.log(`✅ Successfully deleted ${selectedNodeIds.length} nodes`);
+          } else {
+            // COPY MODE: Copy nodes to clipboard and mark as copied
+            const selectedNodesForCopy = selectedNodes;
+            const selectedEdgesForCopy = edgesState.filter(edge => 
+              selectedNodeIds.includes(edge.source) && selectedNodeIds.includes(edge.target)
+            );
+            
+            // Update clipboard directly
+            useFlowStore.setState(state => {
+              state.clipboard.nodes = selectedNodesForCopy;
+              state.clipboard.edges = selectedEdgesForCopy;
+              console.log('📋 CLIPBOARD UPDATED - Nodes:', state.clipboard.nodes.length, 'Edges:', state.clipboard.edges.length);
+              return state;
+            });
+            
+            console.log(`🎯 Auto-copied ${selectedNodesForCopy.length} nodes and ${selectedEdgesForCopy.length} edges to clipboard`);
+            
+            // Immediately trigger pulse animation for selected nodes
+            console.log(`✨ Triggering immediate pulse for ${selectedNodeIds.length} selected nodes`);
+            useFlowStore.getState().markNodesAsCopied(selectedNodeIds);
+            
+            // Additional debugging: Check DOM elements after a short delay
+            setTimeout(() => {
+              selectedNodeIds.forEach(nodeId => {
+                const nodeElement = document.querySelector(`[data-id="${nodeId}"]`);
+                if (nodeElement) {
+                  console.log(`🔍 DOM node ${nodeId} classes:`, nodeElement.className);
+                  console.log(`🔍 DOM node ${nodeId} inline style:`, (nodeElement as HTMLElement).style.animation);
+                  console.log(`🔍 DOM node ${nodeId} inline boxShadow:`, (nodeElement as HTMLElement).style.boxShadow);
+                  console.log(`🔍 DOM node ${nodeId} computed animation:`, window.getComputedStyle(nodeElement).animation);
+                } else {
+                  console.log(`❌ Could not find DOM element for node ${nodeId}`);
+                }
+              });
+            }, 100);
+            
+            // Check clipboard after a short delay to see if it gets cleared
+            setTimeout(() => {
+              const clipboardCheck = useFlowStore.getState().clipboard;
+              console.log('📋 CLIPBOARD CHECK (100ms later):', clipboardCheck.nodes.length, 'nodes,', clipboardCheck.edges.length, 'edges');
+            }, 100);
+          }
+        }
+        
+        // Update our store selection
+        setSelectedNodeIds(selectedNodeIds);
+        
+        // Use React Flow's official setNodes API to update selection state
+        if (selectedNodeIds.length > 0) {
+          reactFlowInstance.setNodes(nodes => 
+            nodes.map(node => ({
+              ...node,
+              selected: selectedNodeIds.includes(node.id)
+            }))
+          );
+        }
       }
     }
     
+    // Always clear selection box on mouse up
     setSelectionBox(null);
-  }, [selectionBox, reactFlowInstance, nodesState, setSelectedNodeIds]);
+  }, [selectionBox, reactFlowInstance, nodesState, edgesState, isShiftDeleteMode]);
+
+  // Handle React Flow's selection changes and sync with our store
+  const onSelectionChange = useCallback(({ nodes: selectedNodes }: { nodes: any[] }) => {
+    const selectedNodeIds = selectedNodes.map(node => node.id);
+    console.log('React Flow selection changed:', selectedNodeIds);
+    
+    // Only update if the selection actually changed (prevent feedback loops)
+    const currentSelectedIds = useFlowStore.getState().selectedNodeIds;
+    // Create copies of arrays before sorting to avoid mutating read-only arrays
+    const sortedNew = [...selectedNodeIds].sort();
+    const sortedCurrent = [...currentSelectedIds].sort();
+    if (JSON.stringify(sortedNew) !== JSON.stringify(sortedCurrent)) {
+      // Update store without triggering additional React Flow updates
+      useFlowStore.setState(state => {
+        state.selectedNodeIds = selectedNodeIds;
+        return state;
+      });
+    }
+  }, []);
 
   // Handle node changes - update positions in store when dragged
   const handleNodesChange = useCallback((changes: any) => {
@@ -641,136 +876,273 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
     }
   }, [shouldAutoOrganize, reactFlowInstance, nodes.length, onAutoOrganizeComplete]);
 
-  // Organize function (copied from Toolbar)
+  // Smart organize function - uses same algorithm as Toolbar
   const organizeNodes = () => {
-    console.log('Organizing nodes...');
+    console.log('🎯 Smart Auto-Organize: Starting advanced layout algorithm...');
     
     if (nodes.length < 2) {
       console.log('Not enough nodes to organize');
       return;
     }
 
-    // Layout parameters
-    const horizontalSpacing = 400;
-    const verticalSpacing = 420;
-    const startX = 150;
-    const startY = 150;
-    const maxNodesPerRow = 4;
+    console.log('🎯 Auto-organizing', nodes.length, 'nodes with smart layout');
+
+    // Use the exact same smart layout algorithm as the Toolbar with dynamic vertical spacing for combinations
+    const horizontalSpacing = 650;
+    const startY = 200;
+    const baseLayerVerticalSpacing = 455; // Base minimum spacing between hierarchy levels
+    const siblingHorizontalSpacing = 156;
+    const minNodeSpacing = 150; // Minimum spacing between any two nodes
     
-    // Build adjacency maps for parent-child relationships
+    // Function to calculate dynamic spacing based on node content
+    const calculateNodeHeight = (node: Node) => {
+      let baseHeight = 100; // Default node height
+      
+      if (node.type === 'answer' && node.data?.answerType === 'combinations') {
+        const combinations = node.data?.combinations || [];
+        const variants = node.data?.variants || [];
+        
+        // Always calculate for combination nodes regardless of fold state during organize
+        // (we want proper spacing even if they're currently folded but could be expanded)
+        if (combinations.length > 0) {
+          // More accurate height estimates based on actual UI:
+          // Each variant takes ~50px when expanded (including padding)
+          const variantsHeight = variants.length * 50;
+          // Header section for combinations: ~100px
+          const combinationsHeaderHeight = 100;
+          // Each combination row with status takes ~70px (including borders, padding)
+          const combinationsHeight = combinations.length * 70;
+          // Base node padding and structure: ~150px
+          const baseStructureHeight = 150;
+          
+          baseHeight = baseStructureHeight + variantsHeight + combinationsHeaderHeight + combinationsHeight;
+        }
+      }
+      
+      return baseHeight;
+    };
+    
+    // Build comprehensive graph analysis
     const children = new Map<string, string[]>();
-    const parents = new Map<string, string>();
+    const parents = new Map<string, string[]>();
     const incomingEdges = new Map<string, number>();
+    const outgoingEdges = new Map<string, number>();
+    const directConnections = new Map<string, Set<string>>();
     
     // Initialize maps
     nodes.forEach(node => {
       children.set(node.id, []);
+      parents.set(node.id, []);
       incomingEdges.set(node.id, 0);
+      outgoingEdges.set(node.id, 0);
+      directConnections.set(node.id, new Set());
     });
     
-    // Build parent-child relationships from edges
+    // Build relationship maps from edges
     edges.forEach(edge => {
       const parentChildren = children.get(edge.source) || [];
       parentChildren.push(edge.target);
       children.set(edge.source, parentChildren);
       
-      parents.set(edge.target, edge.source);
+      const childParents = parents.get(edge.target) || [];
+      childParents.push(edge.source);
+      parents.set(edge.target, childParents);
       
       const incoming = incomingEdges.get(edge.target) || 0;
       incomingEdges.set(edge.target, incoming + 1);
+      
+      const outgoing = outgoingEdges.get(edge.source) || 0;
+      outgoingEdges.set(edge.source, outgoing + 1);
+      
+      directConnections.get(edge.source)?.add(edge.target);
+      directConnections.get(edge.target)?.add(edge.source);
     });
     
-    // Find root nodes (nodes with no incoming edges)
-    const rootNodes = nodes.filter(node => (incomingEdges.get(node.id) || 0) === 0);
-    
-    // If no root nodes, use the first node as root
-    if (rootNodes.length === 0 && nodes.length > 0) {
-      rootNodes.push(nodes[0]);
-    }
-    
-    // Assign levels using BFS
-    const nodeLevel = new Map<string, number>();
-    const nodesAtLevel = new Map<number, Node[]>();
+    // Find connected components
+    const connectedComponents: Node[][] = [];
     const visited = new Set<string>();
-    let maxLevel = 0;
     
-    // BFS to assign levels
-    const queue: { node: Node; level: number }[] = [];
-    rootNodes.forEach(node => {
-      queue.push({ node, level: 0 });
-      nodeLevel.set(node.id, 0);
+    const findComponent = (startNode: Node): Node[] => {
+      const component: Node[] = [];
+      const stack = [startNode];
+      const componentVisited = new Set<string>();
+      
+      while (stack.length > 0) {
+        const node = stack.pop()!;
+        if (componentVisited.has(node.id)) continue;
+        
+        componentVisited.add(node.id);
+        visited.add(node.id);
+        component.push(node);
+        
+        const connections = directConnections.get(node.id) || new Set();
+        connections.forEach(connectedId => {
+          const connectedNode = nodes.find(n => n.id === connectedId);
+          if (connectedNode && !componentVisited.has(connectedId)) {
+            stack.push(connectedNode);
+          }
+        });
+      }
+      
+      return component;
+    };
+    
+    nodes.forEach(node => {
+      if (!visited.has(node.id)) {
+        const component = findComponent(node);
+        if (component.length > 0) {
+          connectedComponents.push(component);
+        }
+      }
     });
     
-    while (queue.length > 0) {
-      const { node, level } = queue.shift()!;
+    // Layout each component
+    const layoutComponent = (component: Node[], componentIndex: number) => {
+      const componentNodeIds = new Set(component.map(n => n.id));
+      const componentRoots = component.filter(node => {
+        const nodeParents = parents.get(node.id) || [];
+        return nodeParents.filter(p => componentNodeIds.has(p)).length === 0;
+      });
       
-      if (visited.has(node.id)) continue;
-      visited.add(node.id);
+      if (componentRoots.length === 0 && component.length > 0) {
+        componentRoots.push(component[0]);
+      }
       
-      maxLevel = Math.max(maxLevel, level);
+      const nodeLevel = new Map<string, number>();
+      const nodesAtLevel = new Map<number, Node[]>();
+      const componentVisited = new Set<string>();
+      let maxLevel = 0;
       
-      // Add node to its level
-      const levelNodes = nodesAtLevel.get(level) || [];
-      levelNodes.push(node);
-      nodesAtLevel.set(level, levelNodes);
+      const queue: { node: Node; level: number }[] = [];
+      componentRoots.forEach(node => {
+        queue.push({ node, level: 0 });
+        nodeLevel.set(node.id, 0);
+      });
       
-      // Process children (go to next level)
-      const nodeChildren = children.get(node.id) || [];
-      nodeChildren.forEach(childId => {
-        const childNode = nodes.find(n => n.id === childId);
-        if (childNode && !visited.has(childId)) {
-          queue.push({ node: childNode, level: level + 1 });
-          nodeLevel.set(childId, level + 1);
+      while (queue.length > 0) {
+        const { node, level } = queue.shift()!;
+        
+        if (componentVisited.has(node.id)) continue;
+        componentVisited.add(node.id);
+        
+        maxLevel = Math.max(maxLevel, level);
+        
+        const levelNodes = nodesAtLevel.get(level) || [];
+        levelNodes.push(node);
+        nodesAtLevel.set(level, levelNodes);
+        
+        const nodeChildren = children.get(node.id) || [];
+        nodeChildren.forEach(childId => {
+          if (componentNodeIds.has(childId)) {
+            const childNode = component.find(n => n.id === childId);
+            if (childNode && !componentVisited.has(childId)) {
+              queue.push({ node: childNode, level: level + 1 });
+              nodeLevel.set(childId, level + 1);
+            }
+          }
+        });
+      }
+      
+      const componentWidth = Math.max(1200, (Math.max(...Array.from(nodesAtLevel.values()).map(level => level.length)) - 1) * horizontalSpacing);
+      // Use fixed separation between components instead of multiplying by component width
+      const componentBaseX = componentIndex * 800; // Fixed 800px separation between branch starting points
+      
+      const componentNodes: Node[] = [];
+      // Track INDIVIDUAL node positions to prevent any overlaps
+      const nodePositions = new Map<string, { x: number; y: number; bottom: number }>();
+      
+      for (let level = 0; level <= maxLevel; level++) {
+        const levelNodes = nodesAtLevel.get(level) || [];
+        
+        levelNodes.sort((a, b) => {
+          const aConnections = directConnections.get(a.id)?.size || 0;
+          const bConnections = directConnections.get(b.id)?.size || 0;
+          return bConnections - aConnections;
+        });
+        
+        levelNodes.forEach((node, index) => {
+          const levelWidth = (levelNodes.length - 1) * horizontalSpacing;
+          const levelStartX = componentBaseX + (componentWidth - levelWidth) / 2;
+          
+          let microAdjustmentX = 0;
+          const nodeConnections = directConnections.get(node.id) || new Set();
+          if (nodeConnections.size > 0) {
+            microAdjustmentX = (index - levelNodes.length / 2) * siblingHorizontalSpacing * 0.1;
+          }
+          
+          const nodeX = levelStartX + index * horizontalSpacing + microAdjustmentX;
+          
+          // Calculate Y position ensuring no overlaps with ANY previously positioned nodes
+          let nodeY = startY + level * baseLayerVerticalSpacing;
+          
+          // Check for conflicts with ALL previously positioned nodes
+          let hasConflict = true;
+          while (hasConflict) {
+            hasConflict = false;
+            
+            for (const [, existingPos] of nodePositions.entries()) {
+              // Check if this position would cause overlap
+              const horizontalOverlap = Math.abs(nodeX - existingPos.x) < (horizontalSpacing * 0.8); // Allow some horizontal tolerance
+              const verticalOverlap = nodeY < existingPos.bottom + minNodeSpacing;
+              
+              if (horizontalOverlap && verticalOverlap) {
+                // Move this node below the conflicting node
+                nodeY = existingPos.bottom + minNodeSpacing;
+                hasConflict = true;
+                break;
+              }
+            }
+          }
+          
+          const nodeHeight = calculateNodeHeight(node);
+          const nodeBottom = nodeY + nodeHeight;
+          
+          // Store this node's position info
+          nodePositions.set(node.id, { x: nodeX, y: nodeY, bottom: nodeBottom });
+          
+          console.log(`📍 Positioned ${node.id} at (${nodeX}, ${nodeY}) with height ${nodeHeight}, bottom: ${nodeBottom}`);
+          
+          const position = {
+            x: nodeX,
+            y: nodeY
+          };
+          
+          componentNodes.push({
+            ...node,
+            position
+          });
+        });
+      }
+      
+      return componentNodes;
+    };
+    
+    // Layout all components and combine results
+    const allLayoutedNodes: Node[] = [];
+    connectedComponents.forEach((component, index) => {
+      const layoutedComponent = layoutComponent(component, index);
+      allLayoutedNodes.push(...layoutedComponent);
+    });
+    
+    // Add isolated nodes
+    const isolatedNodes = nodes.filter(node => 
+      !allLayoutedNodes.some(layouted => layouted.id === node.id)
+    );
+    
+    isolatedNodes.forEach((node, index) => {
+      allLayoutedNodes.push({
+        ...node,
+        position: {
+          x: 100 + index * 300,
+          y: startY
         }
       });
-    }
-    
-    // Create a flat ordered list maintaining hierarchy
-    const orderedNodes: Node[] = [];
-    for (let level = 0; level <= maxLevel; level++) {
-      const levelNodes = nodesAtLevel.get(level) || [];
-      orderedNodes.push(...levelNodes);
-    }
-    
-    // Add unconnected nodes at the end
-    const unconnectedNodes = nodes.filter(n => !visited.has(n.id));
-    orderedNodes.push(...unconnectedNodes);
-    
-    // Position nodes in a compact grid with wrapping
-    const updatedNodes = orderedNodes.map((node, index) => {
-      const row = Math.floor(index / maxNodesPerRow);
-      const col = index % maxNodesPerRow;
-      
-      // Calculate position with proper centering
-      const totalCols = Math.min(orderedNodes.length, maxNodesPerRow);
-      const currentRowNodeCount = Math.min(orderedNodes.length - row * maxNodesPerRow, maxNodesPerRow);
-      
-      // Center each row
-      const rowWidth = (currentRowNodeCount - 1) * horizontalSpacing;
-      const totalWidth = (totalCols - 1) * horizontalSpacing;
-      const rowStartX = startX + (totalWidth - rowWidth) / 2;
-      
-      const newPosition = {
-        x: rowStartX + col * horizontalSpacing,
-        y: startY + row * verticalSpacing
-      };
-      
-      return {
-        ...node,
-        position: newPosition
-      };
     });
     
-    // Set bulk update flag BEFORE updating nodes
-    if ((window as any).flowCanvasSetBulkUpdate) {
-      (window as any).flowCanvasSetBulkUpdate();
-    }
+    console.log('🎯 Final layout complete. Total nodes positioned:', allLayoutedNodes.length);
     
-    // Update nodes in store
-    setTimeout(() => {
-      setNodes(updatedNodes);
-      console.log('Organization complete!');
-    }, 50);
+    // Apply the new positions
+    setNodes(allLayoutedNodes);
   };
 
   // Handle minimap click for teleportation
@@ -781,7 +1153,7 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
   }, [reactFlowInstance]);
 
   return (
-    <div className={`w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 ${isShiftPressed ? 'cursor-crosshair' : ''}`}>
+    <div className={`w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 ${isAnySelectionMode ? 'cursor-crosshair' : ''}`}>
       <ReactFlow
         nodes={nodesState}
         edges={edgesState}
@@ -794,15 +1166,16 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
+        onSelectionChange={onSelectionChange}
         nodeTypes={nodeTypes}
         connectionMode={ConnectionMode.Loose}
         defaultEdgeOptions={defaultEdgeOptions}
-        className={`bg-transparent ${isShiftPressed ? 'cursor-crosshair' : ''}`}
-        nodesDraggable={!isShiftPressed}
+        className={`bg-transparent ${isAnySelectionMode ? 'selection-mode' : ''}`}
+        nodesDraggable={!isAnySelectionMode}
         nodesConnectable={true}
         elementsSelectable={true}
         selectNodesOnDrag={false}
-        panOnDrag={!isShiftPressed}
+        panOnDrag={!isAnySelectionMode}
         panOnScroll={true}
         panOnScrollSpeed={0.5}
         zoomOnScroll={true}
@@ -823,16 +1196,47 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
         <Controls className="bg-white shadow-lg rounded-lg border border-gray-200" />
         <MiniMap 
           className="bg-white shadow-lg rounded-lg border border-gray-200"
-          nodeColor={(node) => {
+          nodeColor={(node: Node) => {
+            // Selected nodes - bright colors with high contrast
+            if (selectedNodeIds.includes(node.id)) {
+              switch (node.type) {
+                case 'question': return '#1e40af'; // Dark blue for better contrast
+                case 'answer': return '#6b21a8'; // Dark purple for better contrast
+                case 'outcome': return '#15803d'; // Dark green for better contrast
+                default: return '#374151';
+              }
+            }
+            
+            // Upstream siblings (parent nodes) - orange theme for visibility
+            if (upstreamSiblings.has(node.id)) {
+              switch (node.type) {
+                case 'question': return '#ea580c'; // Orange-blue
+                case 'answer': return '#dc2626'; // Orange-red
+                case 'outcome': return '#f59e0b'; // Orange-yellow
+                default: return '#f97316'; // Pure orange
+              }
+            }
+            
+            // Downstream siblings (child nodes) - purple theme for visibility
+            if (downstreamSiblings.has(node.id)) {
+              switch (node.type) {
+                case 'question': return '#7c3aed'; // Purple
+                case 'answer': return '#9333ea'; // Bright purple
+                case 'outcome': return '#a855f7'; // Light purple
+                default: return '#8b5cf6'; // Medium purple
+              }
+            }
+            
+            // Default colors for non-related nodes (muted)
             if (node.data?.isOrphaned) return '#fb923c'; // Orange for orphaned nodes
             switch (node.type) {
-              case 'question': return '#2563eb';
-              case 'answer': return '#8b5cf6';
-              case 'outcome': return '#22c55e';
-              default: return '#9ca3af';
+              case 'question': return '#94a3b8'; // Muted blue
+              case 'answer': return '#cbd5e1'; // Muted purple
+              case 'outcome': return '#d1d5db'; // Muted green
+              default: return '#e5e7eb'; // Very muted gray
             }
           }}
-          maskColor="rgba(255, 255, 255, 0.8)"
+          maskColor="rgba(255, 255, 255, 0.9)"
           pannable={true}
           zoomable={true}
           onClick={onMinimapClick}
@@ -867,15 +1271,17 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
         
 
         
+
+        
         {/* Selection Box */}
         {selectionBox?.isSelecting && (
           <div
             className="absolute pointer-events-none border-2 border-blue-500 bg-blue-200 bg-opacity-20 z-10"
             style={{
-              left: Math.min(selectionBox.startX, selectionBox.endX),
-              top: Math.min(selectionBox.startY, selectionBox.endY),
-              width: Math.abs(selectionBox.endX - selectionBox.startX),
-              height: Math.abs(selectionBox.endY - selectionBox.startY),
+              left: Math.min(selectionBox.start.x, selectionBox.end.x),
+              top: Math.min(selectionBox.start.y, selectionBox.end.y),
+              width: Math.abs(selectionBox.end.x - selectionBox.start.x),
+              height: Math.abs(selectionBox.end.y - selectionBox.start.y),
             }}
           />
         )}

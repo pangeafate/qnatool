@@ -9,6 +9,7 @@ interface FlowState {
   selectedNodeId: string | null;
   selectedEdgeId: string | null;
   selectedNodeIds: string[]; // Add multi-selection support
+  copiedNodeIds: string[]; // Track nodes that were recently copied (for pulse animation)
   clipboard: { nodes: Node[]; edges: Edge[] }; // Add clipboard support
   focusNodeId: string | null; // Add this to track which node to focus on
   
@@ -25,6 +26,7 @@ interface FlowState {
   updateNode: (nodeId: string, data: any) => void;
   updateNodePosition: (nodeId: string, position: { x: number; y: number }) => void;
   deleteNode: (nodeId: string) => void;
+  deleteNodes: (nodeIds: string[]) => void;
   addEdge: (edge: Edge) => void;
   deleteEdge: (edgeId: string) => void;
   setNodes: (nodes: Node[]) => void;
@@ -35,6 +37,8 @@ interface FlowState {
   addToSelection: (nodeId: string) => void;
   removeFromSelection: (nodeId: string) => void;
   clearSelection: () => void;
+  markNodesAsCopied: (nodeIds: string[]) => void;
+  clearCopiedNodes: () => void;
   copySelectedNodes: () => void;
   pasteNodes: (position?: { x: number; y: number }) => void;
   cleanupDuplicateEdges: () => void;
@@ -80,6 +84,7 @@ export const useFlowStore = create<FlowState>()(
     selectedNodeId: null,
     selectedEdgeId: null,
     selectedNodeIds: [], // Initialize multi-selection state
+    copiedNodeIds: [], // Initialize copied nodes tracking
     clipboard: { nodes: [], edges: [] }, // Initialize clipboard
     focusNodeId: null, // Initialize focusNodeId
     
@@ -134,6 +139,35 @@ export const useFlowStore = create<FlowState>()(
         // Log cleanup for debugging
         if (edgesToRemove.length > 0) {
           console.log(`Cleaned up ${edgesToRemove.length} edges for deleted node ${nodeId}`);
+        }
+      });
+    },
+    
+    deleteNodes: (nodeIds) => {
+      // Save current state to history only once
+      get().saveToHistory();
+      
+      set((state) => {
+        // Remove all nodes at once
+        state.nodes = state.nodes.filter(n => !nodeIds.includes(n.id));
+        
+        // Remove all edges connected to these nodes (both as source and target)
+        const edgesToRemove = state.edges.filter(e => 
+          nodeIds.includes(e.source) || nodeIds.includes(e.target)
+        );
+        state.edges = state.edges.filter(e => 
+          !nodeIds.includes(e.source) && !nodeIds.includes(e.target)
+        );
+        
+        // Clear selections for deleted nodes
+        if (nodeIds.includes(state.selectedNodeId || '')) {
+          state.selectedNodeId = null;
+        }
+        state.selectedNodeIds = state.selectedNodeIds.filter(id => !nodeIds.includes(id));
+        
+        // Log cleanup for debugging
+        if (edgesToRemove.length > 0) {
+          console.log(`Cleaned up ${edgesToRemove.length} edges for ${nodeIds.length} deleted nodes`);
         }
       });
     },
@@ -199,6 +233,13 @@ export const useFlowStore = create<FlowState>()(
     setSelectedNodeId: (nodeId) => set((state) => {
       state.selectedNodeId = nodeId;
       state.selectedEdgeId = null; // Clear edge selection when node is selected
+      
+      // Synchronize selectedNodeIds array with single node selection
+      if (nodeId) {
+        state.selectedNodeIds = [nodeId];
+      } else {
+        state.selectedNodeIds = [];
+      }
     }),
     
     setSelectedEdgeId: (edgeId: string | null) => set((state) => {
@@ -226,16 +267,51 @@ export const useFlowStore = create<FlowState>()(
       state.selectedNodeIds = [];
     }),
 
+    markNodesAsCopied: (nodeIds) => set((state) => {
+      console.log('🟢 markNodesAsCopied() called with:', nodeIds);
+      
+      // Check if these nodes are already marked as copied to prevent double-pulsing
+      const alreadyCopiedNodes = nodeIds.filter(id => state.copiedNodeIds.includes(id));
+      const newNodesToPulse = nodeIds.filter(id => !state.copiedNodeIds.includes(id));
+      
+      if (alreadyCopiedNodes.length > 0) {
+        console.log('🟡 Some nodes already pulsing:', alreadyCopiedNodes);
+      }
+      
+      if (newNodesToPulse.length > 0) {
+        console.log('🟢 Setting copiedNodeIds to:', [...state.copiedNodeIds, ...newNodesToPulse]);
+        state.copiedNodeIds = [...state.copiedNodeIds, ...newNodesToPulse];
+        
+        // Automatically clear the copied state after 1 second for the new nodes
+        setTimeout(() => {
+          console.log('🕒 Auto-clearing copiedNodeIds after 1 second for nodes:', newNodesToPulse);
+          set((state) => {
+            state.copiedNodeIds = state.copiedNodeIds.filter(id => !newNodesToPulse.includes(id));
+            console.log('🕒 copiedNodeIds after clearing:', state.copiedNodeIds);
+          });
+        }, 1000);
+      } else {
+        console.log('🟡 All nodes already pulsing, skipping');
+      }
+    }),
+
+    clearCopiedNodes: () => set((state) => {
+      state.copiedNodeIds = [];
+    }),
+
     copySelectedNodes: () => set((state) => {
+      console.log('🔄 copySelectedNodes() called - selectedNodeIds:', state.selectedNodeIds);
       const selectedNodes = state.nodes.filter(node => state.selectedNodeIds.includes(node.id));
       const selectedEdges = state.edges.filter(edge => 
         state.selectedNodeIds.includes(edge.source) && state.selectedNodeIds.includes(edge.target)
       );
       
+      console.log('🔄 copySelectedNodes() - filtered nodes:', selectedNodes.length, 'edges:', selectedEdges.length);
+      
       state.clipboard.nodes = selectedNodes;
       state.clipboard.edges = selectedEdges;
       
-      console.log(`Copied ${selectedNodes.length} nodes and ${selectedEdges.length} edges to clipboard.`);
+      console.log(`📋 CLIPBOARD OVERWRITTEN by copySelectedNodes() - ${selectedNodes.length} nodes and ${selectedEdges.length} edges to clipboard.`);
     }),
 
     pasteNodes: (position) => set((state) => {
@@ -246,13 +322,31 @@ export const useFlowStore = create<FlowState>()(
 
       const newNodes: Node[] = [];
       const newEdges: Edge[] = [];
-      const offsetX = position?.x || 0;
-      const offsetY = position?.y || 0;
       
       // Create a mapping from old node IDs to new node IDs
       const nodeIdMap = new Map<string, string>();
 
-      // Create new nodes with updated IDs
+      // Calculate the bounding box of the clipboard nodes to center them
+      const clipboardNodes = state.clipboard.nodes;
+      const minX = Math.min(...clipboardNodes.map(node => node.position.x));
+      const maxX = Math.max(...clipboardNodes.map(node => node.position.x));
+      const minY = Math.min(...clipboardNodes.map(node => node.position.y));
+      const maxY = Math.max(...clipboardNodes.map(node => node.position.y));
+      
+      const clipboardCenterX = (minX + maxX) / 2;
+      const clipboardCenterY = (minY + maxY) / 2;
+      
+      // Calculate offset to center the clipboard at the target position
+      const targetX = position?.x || 0;
+      const targetY = position?.y || 0;
+      const offsetX = targetX - clipboardCenterX;
+      const offsetY = targetY - clipboardCenterY;
+      
+      console.log(`📍 Centering ${clipboardNodes.length} nodes at (${targetX}, ${targetY})`);
+      console.log(`📐 Clipboard bounds: (${minX}, ${minY}) to (${maxX}, ${maxY}), center: (${clipboardCenterX}, ${clipboardCenterY})`);
+      console.log(`🎯 Applying offset: (${offsetX}, ${offsetY})`);
+
+      // Create new nodes with updated IDs and centered positions
       state.clipboard.nodes.forEach(node => {
         const newNodeId = `pasted-${node.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         nodeIdMap.set(node.id, newNodeId);
@@ -300,12 +394,11 @@ export const useFlowStore = create<FlowState>()(
       state.nodes.push(...newNodes);
       state.edges.push(...newEdges);
 
-      // Update selection to the newly pasted nodes
-      state.selectedNodeIds = newNodes.map(node => node.id);
-      state.selectedNodeId = null;
-      state.selectedEdgeId = null;
+      // Don't change selection - keep original selected nodes pulsing
+      // The originally selected nodes will keep their pulse animation
+      // while the pasted nodes won't be selected so they won't pulse
 
-      console.log(`Pasted ${newNodes.length} nodes and ${newEdges.length} edges.`);
+              console.log(`Pasted ${newNodes.length} nodes and ${newEdges.length} edges. Original selection preserved.`);
     }),
     
     // Focus functionality
