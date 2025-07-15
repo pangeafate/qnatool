@@ -69,8 +69,30 @@ export default function OutcomeNode({ id, data, selected }: NodeProps<OutcomeNod
 
         {/* Path ID(s) - foldable display */}
         <div className="text-xs font-mono text-gray-500 bg-gray-50 px-2 py-1 rounded">
-          {data.pathIds && data.pathIds.length > 1 ? (
-            <div className="space-y-1">
+          {data.pathIds && data.pathIds.length > 0 ? (
+            data.pathIds.length > 1 ? (
+              <div className="space-y-1">
+                <div 
+                  className="flex items-center justify-between cursor-pointer hover:bg-gray-100 px-1 py-0.5 rounded"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLocalPathFolded(!isPathFolded);
+                  }}
+                >
+                  <div className="font-semibold text-gray-600">Paths ({data.pathIds.length}):</div>
+                  {isPathFolded ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
+                </div>
+                {!isPathFolded && (
+                  <div className="space-y-1">
+                    {data.pathIds.map((pathId, index) => (
+                      <div key={index} className="text-xs pl-2">
+                        {pathId}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
               <div 
                 className="flex items-center justify-between cursor-pointer hover:bg-gray-100 px-1 py-0.5 rounded"
                 onClick={(e) => {
@@ -78,19 +100,12 @@ export default function OutcomeNode({ id, data, selected }: NodeProps<OutcomeNod
                   setLocalPathFolded(!isPathFolded);
                 }}
               >
-                <div className="font-semibold text-gray-600">Paths ({data.pathIds.length}):</div>
+                <div className="truncate">
+                  {isPathFolded ? 'Path: ...' : data.pathIds[0]}
+                </div>
                 {isPathFolded ? <ChevronRight size={12} /> : <ChevronDown size={12} />}
               </div>
-              {!isPathFolded && (
-                <div className="space-y-1">
-                  {data.pathIds.map((pathId, index) => (
-                    <div key={index} className="text-xs pl-2">
-                      {pathId}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            )
           ) : (
             <div 
               className="flex items-center justify-between cursor-pointer hover:bg-gray-100 px-1 py-0.5 rounded"
