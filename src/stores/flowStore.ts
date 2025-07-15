@@ -188,27 +188,9 @@ export const useFlowStore = create<FlowState>()(
         if (!isDuplicate) {
           state.edges.push(edge);
           
-          // If the target is an outcome node, update its path ID based on the source
-          const targetNode = state.nodes.find(n => n.id === edge.target);
-          const sourceNode = state.nodes.find(n => n.id === edge.source);
-          
-          if (targetNode && targetNode.type === 'outcome' && sourceNode) {
-            const targetIndex = state.nodes.findIndex(n => n.id === edge.target);
-            if (targetIndex !== -1) {
-              // Generate proper sequential path ID for outcome node
-              const pathGenerator = PathIdGenerator.getInstance();
-              const sourcePathId = sourceNode.data?.pathId || 'PATH';
-              const outcomeNumber = pathGenerator.getOutcomeNumberForNode(edge.target, sourcePathId, state.nodes);
-              const newPathId = `${sourcePathId}-E${outcomeNumber}`;
-              
-              state.nodes[targetIndex].data = {
-                ...state.nodes[targetIndex].data,
-                pathId: newPathId
-              };
-              
-              console.log(`Updated outcome node path ID to: ${newPathId}`);
-            }
-          }
+          // REMOVED: Basic outcome path logic - let propagatePathIdOnConnection handle all cases
+          // This prevents conflicts with combination/variant path propagation
+          console.log(`Added edge: ${edge.source} -> ${edge.target} (handle: ${edge.sourceHandle})`);
         }
       });
     },
@@ -218,6 +200,29 @@ export const useFlowStore = create<FlowState>()(
       get().saveToHistory();
       
       set((state) => {
+        // Find the edge before removing it to clean up target node
+        const edgeToDelete = state.edges.find(e => e.id === edgeId);
+        
+        if (edgeToDelete) {
+          console.log(`🗑️ Deleting edge: ${edgeToDelete.source} -> ${edgeToDelete.target}`);
+          
+          // Clean up target node's path
+          const targetIndex = state.nodes.findIndex(n => n.id === edgeToDelete.target);
+          if (targetIndex !== -1) {
+            const targetNode = state.nodes[targetIndex];
+            
+            // Mark target as disconnected from root
+            state.nodes[targetIndex].data = {
+              ...targetNode.data,
+              pathId: `disconnected from root-${targetNode.id}`,
+              pathIds: [`disconnected from root-${targetNode.id}`]
+            };
+            
+            console.log(`🗑️ Marked target node ${edgeToDelete.target} as disconnected from root`);
+          }
+        }
+        
+        // Remove the edge
         state.edges = state.edges.filter(e => e.id !== edgeId);
       });
     },
