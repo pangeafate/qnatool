@@ -78,7 +78,25 @@ interface FlowState {
 }
 
 export const useFlowStore = create<FlowState>()(
-  immer((set, get) => ({
+  immer((set, get) => {
+    // Debounced auto-propagation to avoid excessive recalculation
+    let autoPropagationTimeout: number | null = null;
+    
+    const triggerAutoPropagation = () => {
+      // Clear any existing timeout to debounce multiple rapid changes
+      if (autoPropagationTimeout) {
+        clearTimeout(autoPropagationTimeout);
+      }
+      
+      // Schedule propagation after a short delay to batch operations
+      autoPropagationTimeout = setTimeout(() => {
+        console.log('🔄 Auto-triggering path propagation after structural changes');
+        get().propagatePathToAll();
+        autoPropagationTimeout = null;
+      }, 100); // 100ms delay to batch rapid operations
+    };
+
+    return {
     nodes: [],
     edges: [],
     selectedNodeId: null,
@@ -103,6 +121,9 @@ export const useFlowStore = create<FlowState>()(
       set((state) => {
         state.nodes.push(node as any);
       });
+      
+      // Trigger automatic path propagation
+      triggerAutoPropagation();
     },
     
     updateNode: (nodeId, data) => set((state) => {
@@ -141,6 +162,9 @@ export const useFlowStore = create<FlowState>()(
           console.log(`Cleaned up ${edgesToRemove.length} edges for deleted node ${nodeId}`);
         }
       });
+      
+      // Trigger automatic path propagation
+      triggerAutoPropagation();
     },
     
     deleteNodes: (nodeIds) => {
@@ -170,6 +194,9 @@ export const useFlowStore = create<FlowState>()(
           console.log(`Cleaned up ${edgesToRemove.length} edges for ${nodeIds.length} deleted nodes`);
         }
       });
+      
+      // Trigger automatic path propagation
+      triggerAutoPropagation();
     },
     
     addEdge: (edge) => {
@@ -193,6 +220,9 @@ export const useFlowStore = create<FlowState>()(
           console.log(`Added edge: ${edge.source} -> ${edge.target} (handle: ${edge.sourceHandle})`);
         }
       });
+      
+      // Trigger automatic path propagation
+      triggerAutoPropagation();
     },
     
     deleteEdge: (edgeId) => {
@@ -225,6 +255,9 @@ export const useFlowStore = create<FlowState>()(
         // Remove the edge
         state.edges = state.edges.filter(e => e.id !== edgeId);
       });
+      
+      // Trigger automatic path propagation
+      triggerAutoPropagation();
     },
     
     setNodes: (nodes) => set((state) => {
@@ -404,6 +437,9 @@ export const useFlowStore = create<FlowState>()(
       // while the pasted nodes won't be selected so they won't pulse
 
               console.log(`Pasted ${newNodes.length} nodes and ${newEdges.length} edges. Original selection preserved.`);
+      
+      // Trigger automatic path propagation
+      triggerAutoPropagation();
     }),
     
     // Focus functionality
@@ -808,11 +844,17 @@ export const useFlowStore = create<FlowState>()(
       
       state.nodes.push(questionNode as any, answerNode as any);
       state.edges.push(edge);
+      
+      // Trigger automatic path propagation
+      triggerAutoPropagation();
     }),
     
     importFromExcel: (data) => set((state) => {
       state.nodes = data.nodes as any;
       state.edges = data.edges;
+      
+      // Trigger automatic path propagation
+      triggerAutoPropagation();
     }),
     
     additiveImport: (nodes, edges) => set((state) => {
@@ -820,6 +862,9 @@ export const useFlowStore = create<FlowState>()(
       // The conflict resolution and positioning is handled by ImportUtils before calling this
       state.nodes.push(...nodes as any);
       state.edges.push(...edges);
+      
+      // Trigger automatic path propagation
+      triggerAutoPropagation();
     }),
     
     exportToFormat: (format) => {
@@ -888,6 +933,9 @@ export const useFlowStore = create<FlowState>()(
         state.nodes = JSON.parse(JSON.stringify(prevState.nodes)) as any;
         state.edges = JSON.parse(JSON.stringify(prevState.edges));
         console.log('Undo: Restored state from history index', state.historyIndex);
+        
+        // Trigger automatic path propagation after undo
+        triggerAutoPropagation();
       }
     }),
 
@@ -898,10 +946,19 @@ export const useFlowStore = create<FlowState>()(
         state.nodes = JSON.parse(JSON.stringify(nextState.nodes)) as any;
         state.edges = JSON.parse(JSON.stringify(nextState.edges));
         console.log('Redo: Restored state from history index', state.historyIndex);
+        
+        // Trigger automatic path propagation after redo
+        triggerAutoPropagation();
       }
     }),
 
     propagatePathToAll: () => {
+      // Prevent auto-propagation from triggering during manual propagation
+      if (autoPropagationTimeout) {
+        clearTimeout(autoPropagationTimeout);
+        autoPropagationTimeout = null;
+      }
+      
       // Save current state to history before making changes
       get().saveToHistory();
       
@@ -951,5 +1008,6 @@ export const useFlowStore = create<FlowState>()(
         console.log('Path ID propagation completed - all nodes now have updated path IDs');
       });
     },
-  }))
+    };
+  })
 );
