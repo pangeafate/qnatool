@@ -616,25 +616,32 @@ export const useFlowStore = create<FlowState>()(
       } else if (sourceNode.data?.answerType === 'combinations' && sourceHandle?.startsWith('combination-')) {
         // For Combinations answer types, generate the combination path from the base path
         const basePath = sourceNode.data?.pathId;
+        console.log(`🔍 Combination path propagation - Base path: ${basePath}, Source handle: ${sourceHandle}`);
+        
         if (basePath && !basePath.startsWith('disconnected from root-')) {
           const combinationId = sourceHandle.replace('combination-', '');
+          console.log(`🔍 Extracted combination ID: ${combinationId}`);
           
           // Find the combination data to get the variant indices
           const combinations = sourceNode.data?.combinations || [];
+          console.log(`🔍 Available combinations:`, combinations.map((c: any) => ({ id: c.id, variantIndices: c.variantIndices })));
+          
           const combination = combinations.find((c: any) => c.id === combinationId);
+          console.log(`🔍 Found combination:`, combination);
           
           if (combination && combination.variantIndices) {
             const variantPath = combination.variantIndices.map((idx: number) => `V${idx}`).join('+');
             const sourceCombinationPath = `${basePath}-${variantPath}`;
             sourcePathIds = [sourceCombinationPath];
             
-            console.log(`Generated combination path for Combinations answer: ${sourceCombinationPath} from base ${basePath}`);
+            console.log(`✅ Generated combination path for Combinations answer: ${sourceCombinationPath} from base ${basePath}`);
           } else {
-            console.log(`Could not find combination data for ${combinationId}`);
+            console.log(`❌ Could not find combination data for ${combinationId} or missing variantIndices`);
+            console.log(`❌ Combination found:`, combination);
             return;
           }
         } else {
-          console.log(`Source node ${sourceNodeId} has invalid base path for Combinations connection`);
+          console.log(`❌ Source node ${sourceNodeId} has invalid base path for Combinations connection: ${basePath}`);
           return;
         }
       } else {
