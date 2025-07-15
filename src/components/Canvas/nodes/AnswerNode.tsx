@@ -253,11 +253,9 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
     // Generate all possible combinations (2^n - 1, excluding empty set)
     for (let i = 1; i < Math.pow(2, n); i++) {
       const variantIndices: number[] = [];
-      const variantNames: string[] = [];
       for (let j = 0; j < n; j++) {
         if (i & (1 << j)) {
           variantIndices.push(j + 1); // Use 1-based indexing for consistency
-          variantNames.push(variants[j].text || `Answer ${j + 1}`); // Use actual variant text
         }
       }
       
@@ -265,7 +263,7 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
         id: `combo-${i}`,
         variantIndices,
         pathId: `combination-${variantIndices.join('-')}`,
-        label: variantNames.join(' + ') // Use actual variant names instead of "Variants X + Y"
+        label: `Variants ${variantIndices.join(' + ')}`
       };
       
       combinations.push(combination);
@@ -724,8 +722,11 @@ export default function AnswerNode({ id, data, selected }: NodeProps<AnswerNodeD
                         onDoubleClick={(e) => handleCombinationDoubleClick(combination.id, e)}
                     >
                       <div className="flex-1">
-                        <div className="text-xs font-normal text-gray-700">
+                        <div className="text-sm font-medium text-gray-900">
                           {combination.label}
+                        </div>
+                        <div className="text-xs text-gray-500 font-mono">
+                          {combination.pathId}
                         </div>
                       </div>
                       
