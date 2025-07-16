@@ -982,20 +982,28 @@ export function FlowCanvas({ shouldAutoOrganize = false, onAutoOrganizeComplete 
 
   // Auto-organize logic
   useEffect(() => {
-    if (shouldAutoOrganize && reactFlowInstance && nodes.length > 0) {
+    // CRITICAL FIX: Don't auto-organize during import operations - preserve imported coordinates
+    if (shouldAutoOrganize && reactFlowInstance && nodes.length > 0 && !isBulkUpdate.current) {
       console.log('Auto-organizing nodes...');
       
       // Delay the organize and zoom actions
       const timeoutId = setTimeout(() => {
-        // First, organize the nodes
-        organizeNodes();
-        
-        // REMOVED: fitView call that was moving viewport away from nodes
-        // The user wants to stay where they are after organizing
-        setTimeout(() => {
-          // Call the completion callback without changing viewport
+        // Double-check bulk update flag before organizing
+        if (!isBulkUpdate.current) {
+          // First, organize the nodes
+          organizeNodes();
+          
+          // REMOVED: fitView call that was moving viewport away from nodes
+          // The user wants to stay where they are after organizing
+          setTimeout(() => {
+            // Call the completion callback without changing viewport
+            onAutoOrganizeComplete?.();
+          }, 100); // Reduced delay since we're not doing fitView anymore
+        } else {
+          console.log('🔧 Skipping auto-organize due to bulk update (import operation)');
+          // Still call completion callback to reset the flag
           onAutoOrganizeComplete?.();
-        }, 100); // Reduced delay since we're not doing fitView anymore
+        }
         
       }, 1000); // Wait 1 second before starting (reduced from 2000)
       
